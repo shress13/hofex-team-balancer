@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soccer Team Balancer</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.0/dist/tesseract.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-futbol text-green-600"></i> Soccer Team Balancer
+            </h1>
+            <p class="text-gray-600">Upload a Viber poll screenshot to extract player names (dates removed)</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Upload Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-upload text-blue-600"></i> Upload Screenshot
+                </h2>
+                
+                <div class="mb-4">
+                    <label class="block w-full cursor-pointer">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600">Click to upload or drag & drop</p>
+                            <p class="text-sm text-gray-400 mt-1">PNG, JPG - Up to 6 images</p>
+                        </div>
+                        <input type="file" id="imageUpload" accept="image/*" multiple class="hidden">
+                    </label>
+                </div>
+
+                <div id="imagePreview" class="hidden mb-4">
+                    <div id="imageContainer" class="grid grid-cols-2 gap-2"></div>
+                    <p class="text-sm text-gray-600 mt-2"><span id="imageCount">0</span> image(s) selected</p>
+                </div>
+
+                <button id="processBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-magic"></i> Extract Player Names Only
+                </button>
+
+                <div id="ocrProgress" class="hidden mt-4">
+                    <div class="flex items-center justify-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                        <span class="text-gray-600">Extracting names (removing dates)...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extracted Players Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-users text-green-600"></i> Extracted Players
+                </h2>
+                
+                <div id="extractedPlayers" class="mb-4 max-h-96 overflow-y-auto">
+                    <p class="text-gray-400 text-center py-8">No players extracted yet</p>
+                </div>
+
+                <button id="addPlayerBtn" class="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition mb-4 hidden">
+                    <i class="fas fa-user-plus"></i> Add Player Manually
+                </button>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Number of Teams</label>
+                    <select id="teamCount" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="2">2 Teams</option>
+                        <option value="4">4 Teams</option>
+                    </select>
+                </div>
+
+                <button id="balanceBtn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-balance-scale"></i> Create Balanced Teams
+                </button>
+            </div>
+        </div>
+
+        <!-- Teams Display Section -->
+        <div id="teamsDisplay" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">
+                        <i class="fas fa-trophy text-yellow-500"></i> Balanced Teams
+                    </h2>
+                    <button id="redistributeBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-sync-alt"></i> Redistribute
+                    </button>
+                </div>
+                <div id="teamsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Missing Player -->
+    <div id="playerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-user-plus text-blue-600"></i> Add New Player
+            </h3>
+            <p class="text-gray-600 mb-4"><span id="modalMessage">Player "<span id="missingPlayerName" class="font-semibold"></span>" not found in database.</span></p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
+                    <input type="text" id="modalPlayerName" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="Enter full name">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                    <select id="modalPosition" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="">Select position</option>
+                        <option value="S">Striker (S)</option>
+                        <option value="M">Midfield (M)</option>
+                        <option value="D">Defense (D)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Position (Optional)</label>
+                    <select id="modalSecondaryPosition" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="">None</option>
+                        <option value="S">Striker (S)</option>
+                        <option value="M">Midfield (M)</option>
+                        <option value="D">Defense (D)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Skill Level (Seed)</label>
+                    <select id="modalSeed" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="">Select skill level</option>
+                        <option value="4">4 - Best</option>
+                        <option value="3">3 - Good</option>
+                        <option value="2">2 - Average</option>
+                        <option value="1">1 - Beginner</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="modalSkip" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-400 transition">
+                    Skip
+                </button>
+                <button id="modalSave" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    Add Player
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let playersData = [];
+        let extractedPlayerNames = [];
+        let matchedPlayers = [];
+        let unmatchedPlayers = [];
+        let currentUnmatchedIndex = 0;
+        let uploadedImages = [];
+
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageContainer = document.getElementById('imageContainer');
+        const imageCount = document.getElementById('imageCount');
+        const processBtn = document.getElementById('processBtn');
+        const balanceBtn = document.getElementById('balanceBtn');
+        const addPlayerBtn = document.getElementById('addPlayerBtn');
+        const redistributeBtn = document.getElementById('redistributeBtn');
+        const ocrProgress = document.getElementById('ocrProgress');
+        const extractedPlayersDiv = document.getElementById('extractedPlayers');
+        const teamsDisplay = document.getElementById('teamsDisplay');
+        const teamsContainer = document.getElementById('teamsContainer');
+        const teamCount = document.getElementById('teamCount');
+        const playerModal = document.getElementById('playerModal');
+        const missingPlayerName = document.getElementById('missingPlayerName');
+        const modalPlayerName = document.getElementById('modalPlayerName');
+        const modalPosition = document.getElementById('modalPosition');
+        const modalSecondaryPosition = document.getElementById('modalSecondaryPosition');
+        const modalSeed = document.getElementById('modalSeed');
+        const modalSkip = document.getElementById('modalSkip');
+        const modalSave = document.getElementById('modalSave');
+
+        // Load players data (embedded for GitHub Pages)
+        function loadPlayersData() {
+            playersData = [
+                {name: "Ashok Shrestha", aliases: [], position: "S", secondaryPosition: "M", seed: 1},
+                {name: "Rajeeb", aliases: [], position: "S", secondaryPosition: "M", seed: 2},
+                {name: "Bigyan", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Sujit Shrestha", aliases: ["Sujit"], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Pawan", aliases: [], position: "M", secondaryPosition: "D", seed: 3},
+                {name: "Suresh", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Rupesh", aliases: ["Rupesh Uprety"], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Daulat Sharma", aliases: [], position: "S", secondaryPosition: "", seed: 1},
+                {name: "Madan Neupane", aliases: [], position: "S", secondaryPosition: "", seed: 1},
+                {name: "Mohan Sapkota", aliases: [], position: "M", secondaryPosition: "", seed: 2},
+                {name: "Ashish Hada", aliases: ["Ashish"], position: "M", secondaryPosition: "D", seed: 1},
+                {name: "Nirajan karki", aliases: [], position: "M", secondaryPosition: "S", seed: 3},
+                {name: "Sabin Khadka", aliases: ["Sabin", "Sabin Khad", "Sabin"], position: "S", secondaryPosition: "", seed: 1},
+                {name: "Naren", aliases: ["Naren Thapa"], position: "M", secondaryPosition: "S", seed: 3},
+                {name: "Prabin D Karki", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Prabin", aliases: ["Sabin Rai"], position: "M", secondaryPosition: "", seed: 3},
+                {name: "Unnati Ojha", aliases: ["Unnati Bro"], position: "S", secondaryPosition: "M", seed: 2},
+                {name: "Jeevan Neupane", aliases: [], position: "M", secondaryPosition: "", seed: 2},
+                {name: "Deepak Bhandari", aliases: [], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Paurash", aliases: [], position: "D", secondaryPosition: "", seed: 3},
+                {name: "MKD", aliases: ["Ankit", "Ankit Dahal"], position: "D", secondaryPosition: "", seed: 2},
+                {name: "SD", aliases: ["Sree", "Sri"], position: "M", secondaryPosition: "D", seed: 2},
+                {name: "Santos", aliases: ["Dr Santos"], position: "M", secondaryPosition: "", seed: 3},
+                {name: "Rabin", aliases: [], position: "S", secondaryPosition: "", seed: 3},
+                {name: "Samji", aliases: ["Samji Sir", "Samiji", "Samiji Sir"], position: "S", secondaryPosition: "M", seed: 3},
+                {name: "Bikas Sapkota", aliases: ["bikas"], position: "M", secondaryPosition: "", seed: 3},
+                {name: "Roshan Baral", aliases: [], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Dinesh", aliases: ["Dinesh Siwakoti"], position: "D", secondaryPosition: "", seed: 1},
+                {name: "santosh", aliases: [], position: "S", secondaryPosition: "", seed: 4},
+                {name: "Risi", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Paco", aliases: [], position: "M", secondaryPosition: "D", seed: 4},
+                {name: "Janesh", aliases: ["Janesh devkota"], position: "M", secondaryPosition: "S", seed: 3},
+                {name: "Anup", aliases: ["Anup Aryal"], position: "M", secondaryPosition: "S", seed: 3},
+                {name: "Shyam Kandel", aliases: [], position: "D", secondaryPosition: "", seed: 2},
+                {name: "Subesh", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Robbie M", aliases: ["Robbie", "Ravi"], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Arun", aliases: [], position: "S", secondaryPosition: "M", seed: 3},
+                {name: "Pradip Poudel", aliases: [], position: "S", secondaryPosition: "", seed: 2},
+                {name: "Amrit Joshi", aliases: [], position: "M", secondaryPosition: "", seed: 1},
+                {name: "Aakash Thapa", aliases: [], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Shekhar", aliases: [], position: "M", secondaryPosition: "", seed: 2},
+                {name: "Dadin Pandey", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Pravin B", aliases: [], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Maddan P.", aliases: ["Madan Pun"], position: "S", secondaryPosition: "", seed: 3},
+                {name: "Aashish Parajuli", aliases: ["Ashish Parajuli"], position: "D", secondaryPosition: "", seed: 2},
+                {name: "Ujjwal Bhattarai", aliases: ["Ee Ujjwal Bhattarai"], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Santosh", aliases: ["Santosh Acharya"], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Steve", aliases: ["Steve Poudyal", "Steve Poudel"], position: "S", secondaryPosition: "", seed: 3},
+                {name: "Sushir", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Ujwal", aliases: [], position: "M", secondaryPosition: "", seed: 2},
+                {name: "Anjan", aliases: [], position: "S", secondaryPosition: "", seed: 3},
+                {name: "Ashok", aliases: [], position: "S", secondaryPosition: "", seed: 1},
+                {name: "Biswa Bhattarai", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Manoj Pokharel", aliases: [], position: "D", secondaryPosition: "", seed: 3},
+                {name: "Mohan Adhikari", aliases: [], position: "M", secondaryPosition: "", seed: 2},
+                {name: "Nischal", aliases: [], position: "D", secondaryPosition: "", seed: 2},
+                {name: "Tenzing", aliases: [], position: "D", secondaryPosition: "", seed: 2},
+                {name: "Utsav", aliases: [], position: "D", secondaryPosition: "", seed: 2},
+                {name: "Uttam", aliases: [], position: "D", secondaryPosition: "", seed: 1},
+                {name: "Yogesh", aliases: [], position: "S", secondaryPosition: "", seed: 3},
+                {name: "Nirod", aliases: [], position: "S", secondaryPosition: "", seed: 1}
+            ];
+            console.log('Loaded players:', playersData.length, 'players');
+        }
+
+        // Handle image upload (multiple)
+        imageUpload.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files).slice(0, 6);
+            if (files.length > 0) {
+                uploadedImages = [];
+                imageContainer.innerHTML = '';
+                
+                let loadedCount = 0;
+                files.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        uploadedImages.push(e.target.result);
+                        
+                        const imgDiv = document.createElement('div');
+                        imgDiv.className = 'relative';
+                        imgDiv.innerHTML = `
+                            <img src="${e.target.result}" class="w-full rounded-lg border border-gray-300">
+                            <span class="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-1 rounded">${index + 1}</span>
+                        `;
+                        imageContainer.appendChild(imgDiv);
+                        
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            imagePreview.classList.remove('hidden');
+                            imageCount.textContent = files.length;
+                            processBtn.disabled = false;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        // Process images with OCR
+        processBtn.addEventListener('click', async () => {
+            processBtn.disabled = true;
+            ocrProgress.classList.remove('hidden');
+            extractedPlayersDiv.innerHTML = '<p class="text-gray-400 text-center py-8">Processing images...</p>';
+
+            try {
+                let allNames = [];
+                
+                for (let i = 0; i < uploadedImages.length; i++) {
+                    console.log(`Processing image ${i + 1}/${uploadedImages.length}`);
+                    
+                    const result = await Tesseract.recognize(
+                        uploadedImages[i],
+                        'eng',
+                        {
+                            logger: m => console.log(m)
+                        }
+                    );
+
+                    const text = result.data.text;
+                    console.log(`OCR Text from image ${i + 1}:`, text);
+                    
+                    const names = extractPlayerNames(text);
+                    allNames = allNames.concat(names);
+                }
+                
+                extractedPlayerNames = removeDuplicates(allNames);
+                console.log('Unique player names:', extractedPlayerNames);
+                
+                matchedPlayers = matchPlayers(extractedPlayerNames);
+                
+                displayExtractedPlayers(matchedPlayers);
+                
+                // Show add player button after extraction
+                addPlayerBtn.classList.remove('hidden');
+                
+                if (unmatchedPlayers.length > 0) {
+                    currentUnmatchedIndex = 0;
+                    showPlayerModal();
+                } else {
+                    balanceBtn.disabled = matchedPlayers.length === 0;
+                }
+                
+            } catch (error) {
+                console.error('OCR Error:', error);
+                extractedPlayersDiv.innerHTML = '<p class="text-red-500 text-center py-8">Error processing images</p>';
+            } finally {
+                ocrProgress.classList.add('hidden');
+                processBtn.disabled = false;
+            }
+        });
+
+        // Extract player names from OCR text (Viber poll format)
+        function extractPlayerNames(text) {
+            const lines = text.split('\n').filter(line => line.trim().length > 0);
+            const names = [];
+            
+            // Comprehensive date and time patterns
+            const monthNames = 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December';
+            
+            const dateTimePatterns = [
+                new RegExp(`(${monthNames})\\s+\\d{1,2}\\s+at\\s+\\d{1,2}:\\d{2}\\s*(AM|PM|am|pm)?`, 'i'), // "Jan 01 at 3:45 PM"
+                new RegExp(`(${monthNames})\\s+\\d{1,2}`, 'i'), // "Jan 01"
+                new RegExp(`(${monthNames})\\s*\\d{1,2}\\s*at\\s*\\d{1,2}:\\d{2}\\s*(AM|PM|am|pm)?`, 'i'), // "Jan01 at 3:45"
+                /yesterday\s+at\s+\d{1,2}:\d{2}\s*(AM|PM|am|pm)?/i, // "yesterday at 3:45"
+                /today\s+at\s+\d{1,2}:\d{2}\s*(AM|PM|am|pm)?/i, // "today at 3:45"
+                /^\d{1,2}:\d{2}(\s*(AM|PM|am|pm))?$/i, // "3:45 PM" or "15:30"
+                /^\d{4}-\d{2}-\d{2}$/i, // "2024-01-15"
+                /^\d{2}\/\d{2}\/\d{4}$/i, // "01/15/2024"
+                /^\d{1,2}\s*(AM|PM|am|pm)$/i, // "3 PM"
+            ];
+            
+            const phonePattern = /^\+1\d{10}$|^\+?\d{10,}$/;
+            
+            const skipPatterns = [
+                /^vote[sd]?\s*(by)?/i,
+                /^done$/i,
+                /wifi|signal|battery|%/i,
+                /^[^\w\s]+$/,
+                /^(o|O|0|l|I|\|)+$/,
+                /\bFT\b|\ball\b/i,
+                /^hg$/i,
+                /^<\s/,
+                /\s<\s/
+            ];
+            
+            const skipWords = ['votes', 'voted', 'done', 'vote', 'by', 'at', 'on', 'am', 'pm', 'info', 'nfo'];
+            const ocrArtifacts = /^(py|o|O|0|l|I|\||\s|\.)+/i;
+            
+            for (const line of lines) {
+                let cleaned = line.trim();
+                
+                if (cleaned.length < 2) continue;
+                
+                // Remove special characters and symbols early
+                cleaned = cleaned.replace(/[®°©¢»"=™£©\)\(&@%]/g, '').trim();
+                // Remove leading symbols and numbers (like 2%, &, etc.)
+                cleaned = cleaned.replace(/^[^a-zA-Z]+/g, '').trim();
+                // Remove trailing 0 from names
+                cleaned = cleaned.replace(/\s+0$/g, '').trim();
+                
+                if (skipPatterns.some(pattern => pattern.test(cleaned))) {
+                    console.log('Skipped by pattern:', line);
+                    continue;
+                }
+                
+                if (skipWords.includes(cleaned.toLowerCase())) continue;
+                
+                // Check for phone numbers first (before date/time patterns)
+                const cleanedPhone = cleaned.replace(/[\s\-\(\)]/g, '');
+                
+                // Debug logging for phone numbers
+                if (cleanedPhone.startsWith('+1') || cleanedPhone.match(/^\+?\d{10,}$/)) {
+                    console.log('Potential phone number detected:', cleaned, '-> cleaned:', cleanedPhone, '-> matches pattern:', phonePattern.test(cleanedPhone));
+                }
+                
+                if (phonePattern.test(cleanedPhone)) {
+                    console.log('Phone number added:', cleaned);
+                    names.push(cleaned);
+                    continue;
+                }
+                
+                // Check against all date/time patterns
+                let isDateTime = false;
+                for (const datePattern of dateTimePatterns) {
+                    if (datePattern.test(cleaned)) {
+                        console.log('Date/Time pattern matched, skipping:', cleaned);
+                        isDateTime = true;
+                        break;
+                    }
+                }
+                if (isDateTime) continue;
+                
+                if (cleaned.match(/^\d+$/)) continue;
+                
+                // Remove (you) pattern from names - handle "(you)", "You (Name)", and "You Name"
+                cleaned = cleaned.replace(/\(you\)/gi, '').trim();
+                cleaned = cleaned.replace(/^you\s*\(/gi, '').replace(/\)$/g, '').trim();
+                // Remove "You " prefix (without parentheses)
+                cleaned = cleaned.replace(/^you\s+/gi, '').trim();
+                
+                // Remove trailing "Sir", "Bro", or "Info" from names
+                cleaned = cleaned.replace(/\s+(sir|bro|info)$/gi, '').trim();
+                
+                // Remove trailing single letters (like "I", "P", etc.) and apostrophes
+                cleaned = cleaned.replace(/\s+[a-zA-Z]$/g, '').trim();
+                cleaned = cleaned.replace(/['\u2019]+$/g, '').trim();
+                
+                // Remove leading junk words (like "wy", "ed", "kad", etc.)
+                cleaned = cleaned.replace(/^(wy|ed|kad)\s+/gi, '').trim();
+                
+                cleaned = cleaned.replace(ocrArtifacts, '').trim();
+                
+                if (cleaned.length < 2) continue;
+                
+                if (!/[a-zA-Z]{2,}/.test(cleaned)) {
+                    console.log('Skipped - not enough letters:', line);
+                    continue;
+                }
+                
+                const wordCount = cleaned.split(/\s+/).filter(w => w.length > 0).length;
+                if (wordCount === 0) continue;
+                
+                // Skip if too many spaces relative to text (junk like "w  O - 3 alll T")
+                const spaceCount = (cleaned.match(/\s/g) || []).length;
+                const charCount = cleaned.replace(/\s/g, '').length;
+                if (spaceCount > charCount * 0.5) {
+                    console.log('Skipped - too many spaces:', line, '-> cleaned:', cleaned);
+                    continue;
+                }
+                
+                // Skip if contains single-letter words (except valid initials like "D" in "Prabin D Karki")
+                const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+                const singleLetterWords = words.filter(w => w.length === 1);
+                if (singleLetterWords.length > 1) {
+                    console.log('Skipped - too many single letters:', line, '-> cleaned:', cleaned);
+                    continue;
+                }
+                
+                // Allow 2-letter names (like 'SD') or names with at least 3 letters
+                const letterCount = (cleaned.match(/[a-zA-Z]/g) || []).length;
+                const isTwoLetterName = cleaned.length === 2 && letterCount === 2;
+                const hasEnoughLetters = letterCount >= 3 || isTwoLetterName;
+                if (!hasEnoughLetters) {
+                    console.log('Skipped - not enough letters after cleaning:', line, '-> cleaned:', cleaned);
+                    continue;
+                }
+                
+                // Skip very short fragments (like "nfo" from "Info")
+                if (cleaned.length < 3 && !isTwoLetterName) {
+                    console.log('Skipped - too short:', line, '-> cleaned:', cleaned);
+                    continue;
+                }
+                
+                console.log('Extracted name:', cleaned, 'from line:', line);
+                names.push(cleaned);
+            }
+            
+            return names;
+        }
+        
+        // Remove duplicate names
+        function removeDuplicates(names) {
+            const uniqueNames = [];
+            const seenNames = new Set();
+            const phonePattern = /^\+?\d{10,}$/;
+            
+            console.log('Removing duplicates from:', names);
+            
+            for (const name of names) {
+                // Check if it's a phone number
+                const cleanedPhone = name.replace(/[\s\-\(\)]/g, '');
+                const isPhone = phonePattern.test(cleanedPhone);
+                
+                // For phone numbers, use the cleaned phone as key; for names, normalize
+                const normalized = isPhone ? cleanedPhone : name.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+                
+                if (!seenNames.has(normalized) && normalized.length > 0) {
+                    seenNames.add(normalized);
+                    uniqueNames.push(name);
+                    console.log('Added unique name:', name, '(normalized:', normalized + ')');
+                } else {
+                    console.log('Skipped duplicate:', name, '(normalized:', normalized + ')');
+                }
+            }
+            
+            console.log('Unique names after deduplication:', uniqueNames);
+            return uniqueNames;
+        }
+
+        // Calculate Levenshtein distance for fuzzy string matching
+        function levenshteinDistance(str1, str2) {
+            const matrix = [];
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[str2.length][str1.length];
+        }
+
+        // Match extracted names with players database
+        function matchPlayers(extractedNames) {
+            const matched = [];
+            const unmatched = [];
+            const phonePattern = /^\+?\d{10,}$/;
+            
+            console.log('Matching players. Extracted names:', extractedNames);
+            console.log('Players database:', playersData);
+            
+            for (const extractedName of extractedNames) {
+                const cleanedPhone = extractedName.replace(/[\s\-\(\)]/g, '');
+                
+                if (phonePattern.test(cleanedPhone)) {
+                    console.log('Phone number detected:', extractedName);
+                    unmatched.push(extractedName);
+                    continue;
+                }
+                
+                const cleanExtracted = extractedName.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+                console.log('Trying to match:', extractedName, '-> cleaned:', cleanExtracted);
+                let found = false;
+                let bestMatch = null;
+                let bestMatchScore = 0;
+                
+                for (const player of playersData) {
+                    // Check main name and all aliases
+                    const namesToCheck = [player.name, ...(player.aliases || [])];
+                    let matchedName = null;
+                    
+                    for (const nameVariation of namesToCheck) {
+                        const cleanPlayer = nameVariation.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+                        
+                        // Exact match - highest priority
+                        if (cleanPlayer === cleanExtracted) {
+                            console.log('Exact match found:', extractedName, '->', player.name, '(via alias:', nameVariation + ')');
+                            matched.push(player);
+                            found = true;
+                            matchedName = nameVariation;
+                            break;
+                        }
+                        
+                        const extractedParts = cleanExtracted.split(/\s+/).filter(p => p.length > 0);
+                        const playerParts = cleanPlayer.split(/\s+/).filter(p => p.length > 0);
+                        
+                        // If extracted is just first name, match if first names are identical
+                        if (extractedParts.length === 1 && playerParts.length >= 1) {
+                            if (extractedParts[0] === playerParts[0]) {
+                                console.log('First name match found:', extractedName, '->', player.name, '(via alias:', nameVariation + ')');
+                                matched.push(player);
+                                found = true;
+                                matchedName = nameVariation;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (found) break;
+                }
+                
+                if (!found) {
+                    console.log('No match found for:', extractedName);
+                    unmatched.push(extractedName);
+                } else {
+                    console.log('Successfully matched:', extractedName);
+                }
+            }
+            
+            unmatchedPlayers = unmatched;
+            return matched;
+        }
+
+        // Display extracted players
+        function displayExtractedPlayers(players) {
+            if (players.length === 0) {
+                extractedPlayersDiv.innerHTML = '<p class="text-red-500 text-center py-8">No players matched. Try manual entry.</p>';
+                return;
+            }
+
+            const positionColors = {
+                'S': 'bg-red-100 text-red-800',
+                'M': 'bg-blue-100 text-blue-800',
+                'D': 'bg-green-100 text-green-800'
+            };
+
+            const positionNames = {
+                'S': 'Striker',
+                'M': 'Midfield',
+                'D': 'Defense'
+            };
+
+            extractedPlayersDiv.innerHTML = players.map(player => `
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg mb-2 hover:bg-gray-50">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user-circle text-2xl text-gray-400"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">${player.name}</div>
+                            <div class="text-sm text-gray-500">
+                                <span class="inline-block px-2 py-1 rounded text-xs ${positionColors[player.position]}">${positionNames[player.position]}</span>
+                                <span class="ml-2">Skill: ${player.seed}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Balance teams
+        balanceBtn.addEventListener('click', () => {
+            const numTeams = parseInt(teamCount.value);
+            const teams = createBalancedTeams(matchedPlayers, numTeams);
+            window.currentTeams = teams;
+            displayTeams(teams);
+        });
+
+        // Create balanced teams algorithm with minimum position requirements
+        function createBalancedTeams(players, numTeams) {
+            const teams = Array.from({ length: numTeams }, () => ({
+                players: [],
+                totalSkill: 0,
+                positions: { S: 0, M: 0, D: 0 }
+            }));
+
+            const targetPlayersPerTeam = Math.floor(players.length / numTeams);
+            const extraPlayers = players.length % numTeams;
+            const minMidfielders = 3;
+            const minDefenders = 3;
+
+            const allPlayers = [...players].sort((a, b) => b.seed - a.seed);
+            const assignedNames = new Set();
+
+            function isAssigned(player) {
+                return assignedNames.has(player.name);
+            }
+
+            function assignPlayer(team, player, preferredPosition = null) {
+                if (!isAssigned(player)) {
+                    const assignedPos = preferredPosition || player.position;
+                    const playerCopy = { ...player, assignedPosition: assignedPos };
+                    team.players.push(playerCopy);
+                    team.totalSkill += player.seed;
+                    team.positions[assignedPos]++;
+                    assignedNames.add(player.name);
+                    return true;
+                }
+                return false;
+            }
+
+            // Phase 1: Ensure minimum defenders (3 per team) - distribute evenly by skill
+            const defenders = allPlayers.filter(p => p.position === 'D' || p.secondaryPosition === 'D');
+            let defenderIndex = 0;
+            for (let round = 0; round < minDefenders; round++) {
+                for (let i = 0; i < numTeams && defenderIndex < defenders.length; i++) {
+                    while (defenderIndex < defenders.length && isAssigned(defenders[defenderIndex])) {
+                        defenderIndex++;
+                    }
+                    if (defenderIndex < defenders.length) {
+                        const player = defenders[defenderIndex];
+                        const useSecondary = player.position !== 'D' && player.secondaryPosition === 'D';
+                        assignPlayer(teams[i], player, useSecondary ? 'D' : player.position);
+                        defenderIndex++;
+                    }
+                }
+            }
+
+            // Phase 2: Ensure minimum midfielders (3 per team) - distribute evenly by skill
+            const midfielders = allPlayers.filter(p => p.position === 'M' || p.secondaryPosition === 'M');
+            let midfielderIndex = 0;
+            for (let round = 0; round < minMidfielders; round++) {
+                for (let i = 0; i < numTeams && midfielderIndex < midfielders.length; i++) {
+                    while (midfielderIndex < midfielders.length && isAssigned(midfielders[midfielderIndex])) {
+                        midfielderIndex++;
+                    }
+                    if (midfielderIndex < midfielders.length) {
+                        const player = midfielders[midfielderIndex];
+                        const useSecondary = player.position !== 'M' && player.secondaryPosition === 'M';
+                        assignPlayer(teams[i], player, useSecondary ? 'M' : player.position);
+                        midfielderIndex++;
+                    }
+                }
+            }
+
+            // Phase 3: Distribute remaining players to balance team sizes
+            const remaining = allPlayers.filter(p => !isAssigned(p));
+            
+            // Sort remaining by skill (high to low) for better balance
+            remaining.sort((a, b) => b.seed - a.seed);
+            
+            for (const player of remaining) {
+                // Find team with fewest players
+                let minPlayerCount = Infinity;
+                let bestTeamIndex = 0;
+                
+                for (let i = 0; i < numTeams; i++) {
+                    const currentCount = teams[i].players.length;
+                    const maxAllowed = targetPlayersPerTeam + (i < extraPlayers ? 1 : 0);
+                    
+                    // Only consider teams that haven't reached their max
+                    if (currentCount < maxAllowed && currentCount < minPlayerCount) {
+                        minPlayerCount = currentCount;
+                        bestTeamIndex = i;
+                    }
+                }
+                
+                assignPlayer(teams[bestTeamIndex], player);
+            }
+            
+            // Optimize for weight balance (within 2 points) and position balance
+            for (let iteration = 0; iteration < 50; iteration++) {
+                let improved = false;
+                
+                // Calculate current imbalances
+                const weights = teams.map(t => t.totalSkill);
+                const maxWeight = Math.max(...weights);
+                const minWeight = Math.min(...weights);
+                const weightSpread = maxWeight - minWeight;
+                
+                // If weight is balanced within 2 points, focus on positions
+                const weightBalanced = weightSpread <= 2;
+                
+                for (let i = 0; i < numTeams; i++) {
+                    for (let j = i + 1; j < numTeams; j++) {
+                        const team1 = teams[i];
+                        const team2 = teams[j];
+                        
+                        // Only swap if player counts are equal or within 1
+                        if (Math.abs(team1.players.length - team2.players.length) > 1) continue;
+                        
+                        for (let p1 = 0; p1 < team1.players.length; p1++) {
+                            for (let p2 = 0; p2 < team2.players.length; p2++) {
+                                const player1 = team1.players[p1];
+                                const player2 = team2.players[p2];
+                                
+                                // Calculate weight changes
+                                const currentWeightDiff = Math.abs(team1.totalSkill - team2.totalSkill);
+                                const newWeight1 = team1.totalSkill - player1.seed + player2.seed;
+                                const newWeight2 = team2.totalSkill - player2.seed + player1.seed;
+                                const newWeightDiff = Math.abs(newWeight1 - newWeight2);
+                                
+                                // Calculate position balance changes
+                                const pos1 = player1.assignedPosition || player1.position;
+                                const pos2 = player2.assignedPosition || player2.position;
+                                
+                                const currentPosImbalance = 
+                                    Math.abs(team1.positions.S - team2.positions.S) +
+                                    Math.abs(team1.positions.M - team2.positions.M) +
+                                    Math.abs(team1.positions.D - team2.positions.D);
+                                
+                                const newPos1 = {...team1.positions};
+                                const newPos2 = {...team2.positions};
+                                newPos1[pos1]--;
+                                newPos1[pos2]++;
+                                newPos2[pos2]--;
+                                newPos2[pos1]++;
+                                
+                                const newPosImbalance = 
+                                    Math.abs(newPos1.S - newPos2.S) +
+                                    Math.abs(newPos1.M - newPos2.M) +
+                                    Math.abs(newPos1.D - newPos2.D);
+                                
+                                // Check if swap improves overall balance
+                                const weightImproves = newWeightDiff < currentWeightDiff;
+                                const positionImproves = newPosImbalance < currentPosImbalance;
+                                
+                                // Calculate global weight spread after swap
+                                const allWeights = teams.map((t, idx) => {
+                                    if (idx === i) return newWeight1;
+                                    if (idx === j) return newWeight2;
+                                    return t.totalSkill;
+                                });
+                                const newMaxWeight = Math.max(...allWeights);
+                                const newMinWeight = Math.min(...allWeights);
+                                const newSpread = newMaxWeight - newMinWeight;
+                                
+                                // Swap if it improves balance and keeps spread reasonable
+                                const shouldSwap = weightBalanced ? 
+                                    (positionImproves && newSpread <= 3) : 
+                                    (weightImproves || (newSpread < weightSpread));
+                                
+                                if (shouldSwap) {
+                                    team1.players[p1] = player2;
+                                    team2.players[p2] = player1;
+                                    team1.totalSkill = newWeight1;
+                                    team2.totalSkill = newWeight2;
+                                    team1.positions[pos1]--;
+                                    team1.positions[pos2]++;
+                                    team2.positions[pos2]--;
+                                    team2.positions[pos1]++;
+                                    
+                                    improved = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (!improved) break;
+            }
+
+            return teams;
+        }
+
+        // Display teams
+        function displayTeams(teams) {
+            console.log('displayTeams called with:', teams.length, 'teams');
+            const teamLabels = ['White', 'Color', 'White', 'Color'];
+            const teamColors = ['gray', 'blue', 'gray', 'red'];
+            const positionIcons = {
+                'S': 'fa-running',
+                'M': 'fa-futbol',
+                'D': 'fa-shield-alt'
+            };
+
+            const renderTeam = (team, i) => {
+                const color = teamColors[i];
+                const label = teamLabels[i];
+                const avgSkill = (team.totalSkill / team.players.length).toFixed(2);
+                const totalWeight = team.totalSkill;
+                
+                return `
+                    <div class="border-2 border-${color}-500 rounded-lg p-4 bg-${color}-50 flex-1">
+                        <h3 class="text-xl font-bold text-${color}-700 mb-2 flex items-center justify-between">
+                            <span><i class="fas fa-users"></i> Team ${i + 1} (${label})</span>
+                            <span class="text-sm font-normal">Players: ${team.players.length}</span>
+                        </h3>
+                        <div class="mb-3 flex gap-4 text-sm font-semibold text-${color}-800">
+                            <span><i class="fas fa-weight"></i> Weight: ${totalWeight}</span>
+                            <span><i class="fas fa-chart-line"></i> Avg: ${avgSkill}</span>
+                        </div>
+                        <div class="space-y-2" data-team-index="${i}">
+                            ${team.players.map((player, pIndex) => `
+                                <div class="bg-white p-2 rounded flex items-center justify-between cursor-move hover:shadow-md transition" 
+                                     draggable="true" 
+                                     data-player-index="${pIndex}"
+                                     data-team-index="${i}"
+                                     data-player-name="${player.name}"
+                                     data-player-skill="${player.seed}">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-grip-vertical text-gray-400"></i>
+                                        <i class="fas ${positionIcons[player.assignedPosition || player.position]} text-${color}-600"></i>
+                                        <span class="font-medium">${player.name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs px-2 py-1 bg-gray-100 rounded">${player.assignedPosition || player.position}</span>
+                                        <span class="text-xs px-2 py-1 bg-${color}-100 rounded">Skill: ${player.seed}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="mt-3 text-sm text-gray-600 flex gap-4">
+                            <span><i class="fas fa-running text-red-500"></i> S: ${team.positions.S}</span>
+                            <span><i class="fas fa-futbol text-blue-500"></i> M: ${team.positions.M}</span>
+                            <span><i class="fas fa-shield-alt text-green-500"></i> D: ${team.positions.D}</span>
+                        </div>
+                    </div>
+                `;
+            };
+
+            let html = '';
+            
+            // Row 1: Team 1 VS Team 2
+            html += '<div class="flex items-center gap-3 mb-6">';
+            html += renderTeam(teams[0], 0);
+            html += '<div class="text-lg font-bold text-red-600 px-2">VS</div>';
+            html += renderTeam(teams[1], 1);
+            html += '</div>';
+            
+            // Row 2: Team 3 VS Team 4 (if 4 teams)
+            if (teams.length === 4) {
+                html += '<div class="flex items-center gap-3">';
+                html += renderTeam(teams[2], 2);
+                html += '<div class="text-lg font-bold text-red-600 px-2">VS</div>';
+                html += renderTeam(teams[3], 3);
+                html += '</div>';
+            }
+            
+            teamsContainer.innerHTML = html;
+            teamsDisplay.classList.remove('hidden');
+            
+            // Log team compositions for debugging
+            teams.forEach((team, i) => {
+                console.log(`Team ${i + 1} players:`, team.players.map(p => p.name));
+            });
+            
+            setupDragAndDrop();
+        }
+
+        // Setup drag and drop functionality
+        function setupDragAndDrop() {
+            let draggedElement = null;
+            let sourceTeamIndex = null;
+            let sourcePlayerIndex = null;
+
+            const playerCards = document.querySelectorAll('[draggable="true"]');
+            const teamContainers = document.querySelectorAll('[data-team-index]');
+
+            playerCards.forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    e.stopPropagation();
+                    draggedElement = e.currentTarget;
+                    sourceTeamIndex = parseInt(e.currentTarget.dataset.teamIndex);
+                    sourcePlayerIndex = parseInt(e.currentTarget.dataset.playerIndex);
+                    e.currentTarget.style.opacity = '0.5';
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+                });
+
+                card.addEventListener('dragend', (e) => {
+                    e.stopPropagation();
+                    e.currentTarget.style.opacity = '1';
+                    draggedElement = null;
+                });
+                
+                card.addEventListener('dragover', (e) => {
+                    e.stopPropagation();
+                });
+            });
+
+            teamContainers.forEach(container => {
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!container.classList.contains('dragging-over')) {
+                        container.classList.add('dragging-over');
+                        container.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                    }
+                });
+
+                container.addEventListener('dragleave', (e) => {
+                    if (e.target === container) {
+                        container.classList.remove('dragging-over');
+                        container.style.backgroundColor = '';
+                    }
+                });
+
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    container.classList.remove('dragging-over');
+                    container.style.backgroundColor = '';
+                    
+                    const targetTeamIndex = parseInt(container.dataset.teamIndex);
+                    
+                    if (sourceTeamIndex !== null && sourceTeamIndex !== targetTeamIndex && draggedElement) {
+                        movePlayer(sourceTeamIndex, sourcePlayerIndex, targetTeamIndex);
+                    }
+                    
+                    draggedElement = null;
+                    sourceTeamIndex = null;
+                    sourcePlayerIndex = null;
+                });
+            });
+        }
+
+        // Move player between teams and update weights
+        function movePlayer(fromTeamIndex, playerIndex, toTeamIndex) {
+            const numTeams = parseInt(teamCount.value);
+            const teams = window.currentTeams;
+            
+            if (!teams || fromTeamIndex === toTeamIndex) return;
+            
+            const player = teams[fromTeamIndex].players[playerIndex];
+            
+            teams[fromTeamIndex].players.splice(playerIndex, 1);
+            teams[fromTeamIndex].totalSkill -= player.seed;
+            teams[fromTeamIndex].positions[player.assignedPosition || player.position]--;
+            
+            teams[toTeamIndex].players.push(player);
+            teams[toTeamIndex].totalSkill += player.seed;
+            teams[toTeamIndex].positions[player.assignedPosition || player.position]++;
+            
+            displayTeams(teams);
+        }
+
+        // Show modal for unmatched player
+        function showPlayerModal() {
+            if (currentUnmatchedIndex < unmatchedPlayers.length) {
+                const playerName = unmatchedPlayers[currentUnmatchedIndex];
+                const phonePattern = /^\+?\d{10,}$/;
+                const cleanedPhone = playerName.replace(/[\s\-\(\)]/g, '');
+                const isPhoneNumber = phonePattern.test(cleanedPhone);
+                
+                missingPlayerName.textContent = playerName;
+                
+                if (isPhoneNumber) {
+                    document.getElementById('modalMessage').innerHTML = `Phone number "<span class="font-semibold">${playerName}</span>" found. Please enter player details:`;
+                    modalPlayerName.value = '';
+                } else {
+                    document.getElementById('modalMessage').innerHTML = `Player "<span class="font-semibold">${playerName}</span>" not found in database.`;
+                    modalPlayerName.value = playerName;
+                }
+                
+                modalPosition.value = '';
+                modalSecondaryPosition.value = '';
+                modalSeed.value = '';
+                playerModal.classList.remove('hidden');
+            } else {
+                playerModal.classList.add('hidden');
+                displayExtractedPlayers(matchedPlayers);
+                balanceBtn.disabled = matchedPlayers.length === 0;
+            }
+        }
+
+        // Handle modal skip
+        modalSkip.addEventListener('click', () => {
+            currentUnmatchedIndex++;
+            showPlayerModal();
+        });
+
+        // Handle modal save
+        modalSave.addEventListener('click', () => {
+            const name = modalPlayerName.value.trim();
+            const position = modalPosition.value;
+            const secondaryPosition = modalSecondaryPosition.value;
+            const seed = parseInt(modalSeed.value);
+
+            if (!name || !position || !seed) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const newPlayer = {
+                name: name,
+                position: position,
+                secondaryPosition: secondaryPosition || '',
+                seed: seed
+            };
+
+            playersData.push(newPlayer);
+            matchedPlayers.push(newPlayer);
+            
+            // Update the display
+            displayExtractedPlayers(matchedPlayers);
+            balanceBtn.disabled = matchedPlayers.length === 0;
+            
+            // Clear form
+            modalPlayerName.value = '';
+            modalPosition.value = '';
+            modalSecondaryPosition.value = '';
+            modalSeed.value = '';
+            
+            // Close modal or move to next unmatched player
+            currentUnmatchedIndex++;
+            showPlayerModal();
+        });
+
+        // Close modal on background click
+        playerModal.addEventListener('click', (e) => {
+            if (e.target === playerModal) {
+                currentUnmatchedIndex++;
+                showPlayerModal();
+            }
+        });
+
+        // Add Player button - opens modal to manually add a player
+        addPlayerBtn.addEventListener('click', () => {
+            unmatchedPlayers.push('Manual Entry');
+            currentUnmatchedIndex = unmatchedPlayers.length - 1;
+            showPlayerModal();
+        });
+
+        // Redistribute button - regenerate teams with same players
+        redistributeBtn.addEventListener('click', () => {
+            // Shuffle players randomly before redistributing
+            const shuffledPlayers = [...matchedPlayers];
+            for (let i = shuffledPlayers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
+            }
+            
+            const numTeams = parseInt(teamCount.value);
+            const teams = createBalancedTeams(shuffledPlayers, numTeams);
+            window.currentTeams = teams;
+            displayTeams(teams);
+        });
+
+        // Initialize
+        loadPlayersData();
+    </script>
+</body>
+</html>
