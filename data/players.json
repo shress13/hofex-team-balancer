@@ -1,0 +1,652 @@
+[
+  {
+    "name": "Janesh Devkota",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "9"
+  },
+  {
+    "name": "Bhanu",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Ujwal Sapkota",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Bishwa Bhattarai",
+    "1st position Choice": "",
+    "1st position Value": "",
+    "1st position Rank": "",
+    "2nd position Choice": "",
+    "2nd position value": "",
+    "2nd position Rank": "",
+    "Stamina": ""
+  },
+  {
+    "name": "Bikas Sapkota",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Defensive Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "7"
+  },
+  {
+    "name": "Samji",
+    "1st position Choice": "Striker",
+    "1st position Value": "8",
+    "1st position Rank": "4",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "8"
+  },
+  {
+    "name": "Rabin Bhattarai",
+    "1st position Choice": "Striker",
+    "1st position Value": "8",
+    "1st position Rank": "4",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Santos",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "8",
+    "1st position Rank": "4",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "7",
+    "2nd position Rank": "5",
+    "Stamina": "7"
+  },
+  {
+    "name": "SD",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "8"
+  },
+  {
+    "name": "Ankit",
+    "1st position Choice": "Center Back",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "4",
+    "Stamina": "6"
+  },
+  {
+    "name": "Unnati Bro",
+    "1st position Choice": "Striker",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6"
+  },
+  {
+    "name": "Sujit Shrestha",
+    "1st position Choice": "Center Back",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "7"
+  },
+  {
+    "name": "Rajeeb",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "5",
+    "1st position Rank": "2",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "5"
+  },
+  {
+    "name": "Ujjwal Bhattarai",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "7"
+  },
+  {
+    "name": "Roshan Baral",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "8",
+    "1st position Rank": "4",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Naren",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Defensive Mid",
+    "2nd position value": "7",
+    "2nd position Rank": "4",
+    "Stamina": "8"
+  },
+  {
+    "name": "Subesh",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "4",
+    "2nd position Rank": "2",
+    "Stamina": "6"
+  },
+  {
+    "name": "Prabin Rana",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "7"
+  },
+  {
+    "name": "Sabin Khadka",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "6"
+  },
+  {
+    "name": "Aashish Parajuli",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "7"
+  },
+  {
+    "name": "Robbie M",
+    "1st position Choice": "Center Back",
+    "1st position Value": "8",
+    "1st position Rank": "4",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "7",
+    "2nd position Rank": "4",
+    "Stamina": "7"
+  },
+  {
+    "name": "Yogesh Parajuli",
+    "1st position Choice": "Striker",
+    "1st position Value": "9",
+    "1st position Rank": "5",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "5",
+    "Stamina": "8"
+  },
+  {
+    "name": "Tenzing Lama",
+    "1st position Choice": "Center Back",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "5.5"
+  },
+  {
+    "name": "Rishi",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "4",
+    "2nd position Rank": "3",
+    "Stamina": "6"
+  },
+  {
+    "name": "Steve Paudel",
+    "1st position Choice": "Striker",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6"
+  },
+  {
+    "name": "Dinesh Siwakoti",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive Mid",
+    "2nd position value": "4",
+    "2nd position Rank": "2",
+    "Stamina": "5.5"
+  },
+  {
+    "name": "Rupesh Uprety",
+    "1st position Choice": "Center Back",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "7.5"
+  },
+  {
+    "name": "Shekhar Dhakal",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "7"
+  },
+  {
+    "name": "Shyam Kandel",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "8",
+    "2nd position Rank": "3",
+    "Stamina": "7"
+  },
+  {
+    "name": "Sushir Simkhada",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "8",
+    "1st position Rank": "4",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "7",
+    "2nd position Rank": "3",
+    "Stamina": "7.5"
+  },
+  {
+    "name": "Paco",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "7",
+    "2nd position Rank": "4",
+    "Stamina": "8"
+  },
+  {
+    "name": "Utsav Rajbhandari",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "4",
+    "2nd position Rank": "2",
+    "Stamina": "6"
+  },
+  {
+    "name": "Uttam Niraula",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "4",
+    "2nd position Rank": "2",
+    "Stamina": "5.5"
+  },
+  {
+    "name": "Deepak Bhandari",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "4",
+    "2nd position Rank": "1",
+    "Stamina": "7"
+  },
+  {
+    "name": "Paurash Singh",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Center Back",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Santosh Acharya",
+    "1st position Choice": "Center Back",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "6"
+  },
+  {
+    "name": "Ashish Hada",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Pravin Bastakoti",
+    "1st position Choice": "Center Back",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Apil Tamang",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Striker",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "7"
+  },
+  {
+    "name": "Daulat Sharma",
+    "1st position Choice": "Striker",
+    "1st position Value": "5",
+    "1st position Rank": "3",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6"
+  },
+  {
+    "name": "Ashok Bhatta",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "6"
+  },
+  {
+    "name": "Abhishes Lamsal",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "2",
+    "2nd position Choice": "Striker",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6"
+  },
+  {
+    "name": "Anjan Ligal",
+    "1st position Choice": "Striker",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "6",
+    "2nd position Rank": "3",
+    "Stamina": "8"
+  },
+  {
+    "name": "BIGYAN",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "5",
+    "1st position Rank": "2",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "4",
+    "2nd position Rank": "2",
+    "Stamina": "5"
+  },
+  {
+    "name": "Madan Pun",
+    "1st position Choice": "Striker",
+    "1st position Value": "9",
+    "1st position Rank": "5",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "8",
+    "2nd position Rank": "5",
+    "Stamina": "9"
+  },
+  {
+    "name": "Nirod Bhattarai",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "5",
+    "1st position Rank": "2",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "5"
+  },
+  {
+    "name": "Ashok Shrestha",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "6",
+    "2nd position Rank": "2",
+    "Stamina": "5"
+  },
+  {
+    "name": "Prabin D Karki",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "5",
+    "1st position Rank": "2",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "4",
+    "2nd position Rank": "1",
+    "Stamina": "5.5"
+  },
+  {
+    "name": "Amrit Joshi",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "6",
+    "1st position Rank": "2",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Mohan Adhikari",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "2",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "5",
+    "2nd position Rank": "2",
+    "Stamina": "6"
+  },
+  {
+    "name": "Mohan Sapkota",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "5",
+    "2nd position Rank": "3",
+    "Stamina": "6"
+  },
+  {
+    "name": "Anup Aryal",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "6",
+    "2nd position Rank": "4",
+    "Stamina": "8"
+  },
+  {
+    "name": "Nischal Budathoki",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "6",
+    "1st position Rank": "2",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "3",
+    "2nd position Rank": "1",
+    "Stamina": "5.5"
+  },
+  {
+    "name": "Ram Bhattarai",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "4",
+    "1st position Rank": "1",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "1",
+    "2nd position Rank": "1",
+    "Stamina": "5"
+  },
+  {
+    "name": "Niraj Bidari",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "2",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "6",
+    "2nd position Rank": "2",
+    "Stamina": "5.5"
+  },
+  {
+    "name": "Jeevan Neupane",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "7",
+    "2nd position Rank": "3",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Nick Reynolds",
+    "1st position Choice": "Striker",
+    "1st position Value": "9",
+    "1st position Rank": "5",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "9",
+    "2nd position Rank": "5",
+    "Stamina": "9"
+  },
+  {
+    "name": "Nirajan Karki",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "7",
+    "2nd position Rank": "4",
+    "Stamina": "8"
+  },
+  {
+    "name": "Dadin Pandey",
+    "1st position Choice": "Fullback Defense",
+    "1st position Value": "4",
+    "1st position Rank": "1",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "2",
+    "2nd position Rank": "1",
+    "Stamina": "5"
+  },
+  {
+    "name": "Madan Neupane",
+    "1st position Choice": "Attacking Mid",
+    "1st position Value": "6",
+    "1st position Rank": "3",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "6",
+    "2nd position Rank": "2",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Manoj Pokhrel",
+    "1st position Choice": "Center Back",
+    "1st position Value": "8",
+    "1st position Rank": "5",
+    "2nd position Choice": "Defensive mid",
+    "2nd position value": "7",
+    "2nd position Rank": "3",
+    "Stamina": "7"
+  },
+  {
+    "name": "Aakash Thapa",
+    "1st position Choice": "Center Back",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Fullback Defense",
+    "2nd position value": "7",
+    "2nd position Rank": "3",
+    "Stamina": "6.5"
+  },
+  {
+    "name": "Arun Bhandari",
+    "1st position Choice": "Striker",
+    "1st position Value": "7",
+    "1st position Rank": "3",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "7",
+    "2nd position Rank": "3",
+    "Stamina": "8"
+  },
+  {
+    "name": "Pawan",
+    "1st position Choice": "Defensive Mid",
+    "1st position Value": "7",
+    "1st position Rank": "4",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "7",
+    "2nd position Rank": "4",
+    "Stamina": "8"
+  },
+  {
+    "name": "Pradip Poudel",
+    "1st position Choice": "Striker",
+    "1st position Value": "7",
+    "1st position Rank": "2",
+    "2nd position Choice": "Attacking Mid",
+    "2nd position value": "6",
+    "2nd position Rank": "2",
+    "Stamina": "6.5"
+  }
+]

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soccer Team Balancer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .player-card {
+            transition: all 0.3s ease;
+        }
+        .player-card:hover {
+            transform: translateY(-2px);
+        }
+        .selected {
+            background-color: rgba(34, 197, 94, 0.1);
+            border-color: rgb(34, 197, 94);
+            border-width: 2px;
+        }
+        .dragging-over {
+            opacity: 0.5;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        .position-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-futbol text-green-600"></i> Soccer Team Balancer
+            </h1>
+            <p class="text-gray-600">Smart team distribution based on player position, rank, and stamina</p>
+        </header>
+
+        <!-- Upload Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-1 bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-upload text-blue-600"></i> Player Database
+                </h2>
+                
+                <div class="mb-4">
+                    <label class="block w-full cursor-pointer">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2 block"></i>
+                            <p class="text-sm text-gray-600">Upload JSON</p>
+                            <p class="text-xs text-gray-400 mt-1">.json file</p>
+                        </div>
+                        <input type="file" id="playerJsonUpload" accept=".json" class="hidden">
+                    </label>
+                </div>
+
+                <div id="uploadStatus" class="text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded hidden">
+                    <span id="statusText"></span>
+                </div>
+
+                <button id="downloadTemplateBtn" class="w-full bg-gray-600 text-white py-2 rounded-lg font-semibold hover:bg-gray-700 transition mb-3">
+                    <i class="fas fa-download"></i> Download Template
+                </button>
+
+                <div id="playerStats" class="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                    <p><strong>Total Players:</strong> <span id="totalPlayersCount">0</span></p>
+                    <p><strong>Selected:</strong> <span id="selectedPlayersCount">0</span></p>
+                </div>
+            </div>
+
+            <!-- Players Selection Section -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-users text-green-600"></i> Select Players
+                </h2>
+
+                <div class="mb-4 flex gap-2">
+                    <button id="selectAllBtn" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm">
+                        Select All
+                    </button>
+                    <button id="deselectAllBtn" class="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700 transition text-sm">
+                        Deselect All
+                    </button>
+                </div>
+
+                <div id="playersList" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-2 bg-gray-50 rounded">
+                    <p class="text-gray-400 col-span-full text-center py-8">Loading players...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Creation Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-cog text-purple-600"></i> Team Settings
+                </h2>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Number of Teams</label>
+                    <div class="flex gap-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="teamCount" value="2" checked class="form-radio text-green-600">
+                            <span class="ml-2 text-gray-700">2 Teams</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="teamCount" value="4" class="form-radio text-green-600">
+                            <span class="ml-2 text-gray-700">4 Teams</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button id="createTeamsBtn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <i class="fas fa-balance-scale"></i> Create Balanced Teams
+                </button>
+
+                <div id="errorMessage" class="mt-4 p-3 bg-red-100 text-red-700 rounded hidden">
+                    <span id="errorText"></span>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-lightbulb text-yellow-500"></i> How It Works
+                </h2>
+
+                <div class="space-y-3 text-sm text-gray-700">
+                    <div class="flex gap-3">
+                        <span class="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">1</span>
+                        <p><strong>Upload JSON</strong> with player database or use the template</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">2</span>
+                        <p><strong>Select Players</strong> who are available for this match</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">3</span>
+                        <p><strong>Choose Teams</strong> - 2 or 4 team configuration</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">4</span>
+                        <p><strong>Algorithm distributes</strong> best 1st position choice players first by value and rank, then moves to 2nd position with stamina considerations</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-blue-50 rounded text-sm">
+                    <p class="text-gray-700"><strong>Player Properties:</strong></p>
+                    <p class="text-gray-600 mt-1">• <strong>1st position Choice:</strong> Primary position (e.g., Striker, Midfielder, Defender)</p>
+                    <p class="text-gray-600">• <strong>1st position Value:</strong> Skill level in primary position (1-10)</p>
+                    <p class="text-gray-600">• <strong>1st position Rank:</strong> Ranking in primary position (1=best)</p>
+                    <p class="text-gray-600">• <strong>2nd position Choice:</strong> Secondary position (optional)</p>
+                    <p class="text-gray-600">• <strong>2nd position Value:</strong> Skill level in secondary position (1-10)</p>
+                    <p class="text-gray-600">• <strong>2nd position Rank:</strong> Ranking in secondary position (1=best)</p>
+                    <p class="text-gray-600">• <strong>Stamina:</strong> Physical fitness level (1-10 scale)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teams Display Section -->
+        <div id="teamsSection" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">
+                        <i class="fas fa-trophy text-yellow-500"></i> Balanced Teams
+                    </h2>
+                    <button id="redistributeBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm">
+                        <i class="fas fa-sync-alt"></i> Redistribute
+                    </button>
+                </div>
+                <div id="teamsContainer" class="space-y-6"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Template Download -->
+    <a id="downloadLink" class="hidden"></a>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let allPlayers = [];
+        let selectedPlayers = [];
+        let currentTeams = [];
+
+        // DOM Elements
+        const playerJsonUpload = document.getElementById('playerJsonUpload');
+        const playersList = document.getElementById('playersList');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const createTeamsBtn = document.getElementById('createTeamsBtn');
+        const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+        const teamsSection = document.getElementById('teamsSection');
+        const teamsContainer = document.getElementById('teamsContainer');
+        const distributePlayers = document.getElementById('redistributeBtn');
+        const statusDiv = document.getElementById('uploadStatus');
+        const statusText = document.getElementById('statusText');
+        const errorDiv = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const selectedPlayersCount = document.getElementById('selectedPlayersCount');
+        const totalPlayersCount = document.getElementById('totalPlayersCount');
+
+        // Initialize
+        loadPlayers();
+
+        // Load players from server
+        async function loadPlayers() {
+            try {
+                const response = await fetch(`${API_URL}/players`);
+                allPlayers = await response.json();
+                updatePlayersList();
+                totalPlayersCount.textContent = allPlayers.length;
+            } catch (error) {
+                console.error('Error loading players:', error);
+                playersList.innerHTML = '<p class="text-red-500 col-span-full">Failed to load players. Make sure the server is running on port 3000.</p>';
+            }
+        }
+
+        // Upload JSON player database
+        playerJsonUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                statusDiv.classList.remove('hidden');
+                statusText.textContent = 'Uploading...';
+                
+                const response = await fetch(`${API_URL}/upload-players`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Upload failed');
+                }
+
+                statusText.textContent = `✓ ${result.count} players loaded successfully`;
+                statusDiv.classList.add('bg-green-100', 'text-green-700');
+                statusDiv.classList.remove('bg-red-100', 'text-red-700');
+
+                // Reload players
+                await loadPlayers();
+                selectedPlayers = [];
+                updatePlayersList();
+
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                statusText.textContent = `✗ ${error.message}`;
+                statusDiv.classList.add('bg-red-100', 'text-red-700');
+                statusDiv.classList.remove('bg-green-100', 'text-green-700');
+            }
+        });
+
+        // Download JSON template
+        downloadTemplateBtn.addEventListener('click', () => {
+            const template = [
+                {
+                    "name": "Player Name",
+                    "1st position Choice": "Striker",
+                    "1st position Value": "8",
+                    "1st position Rank": "1",
+                    "2nd position Choice": "Midfielder",
+                    "2nd position value": "5",
+                    "2nd position Rank": "3",
+                    "Stamina": "8"
+                },
+                {
+                    "name": "Another Player",
+                    "1st position Choice": "Midfielder",
+                    "1st position Value": "7",
+                    "1st position Rank": "2",
+                    "2nd position Choice": "Defender",
+                    "2nd position value": "5",
+                    "2nd position Rank": "3",
+                    "Stamina": "7"
+                }
+            ];
+
+            const json = JSON.stringify(template, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.getElementById('downloadLink');
+            link.href = url;
+            link.download = 'players_template.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Update players list display
+        function updatePlayersList() {
+            if (allPlayers.length === 0) {
+                playersList.innerHTML = '<p class="text-gray-400 col-span-full text-center py-8">No players loaded. Upload a JSON file first.</p>';
+                return;
+            }
+
+            playersList.innerHTML = allPlayers.map((player, index) => `
+                <div class="player-card border border-gray-300 rounded-lg p-3 cursor-pointer hover:shadow-md ${selectedPlayers.some(p => p.name === player.name) ? 'selected' : ''}" 
+                     onclick="togglePlayerSelection(${index})">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <p class="font-semibold text-gray-800">${player.name}</p>
+                            <div class="flex gap-2 mt-1">
+                                <span class="position-badge bg-red-100 text-red-700">${player['1st position Choice'] || 'N/A'}</span>
+                                ${player['2nd position Choice'] ? `<span class="position-badge bg-blue-100 text-blue-700">${player['2nd position Choice']}</span>` : ''}
+                            </div>
+                        </div>
+                        <input type="checkbox" class="w-4 h-4 text-green-600 rounded" 
+                               ${selectedPlayers.some(p => p.name === player.name) ? 'checked' : ''}>
+                    </div>
+                    <div class="text-xs text-gray-600 flex gap-3">
+                        <span><i class="fas fa-star"></i> Pos1 Value: ${player['1st position Value'] || '0'}</span>
+                        <span><i class="fas fa-battery-full"></i> Stamina: ${player['Stamina'] || '0'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle player selection
+        function togglePlayerSelection(index) {
+            const player = allPlayers[index];
+            const isSelected = selectedPlayers.some(p => p.name === player.name);
+
+            if (isSelected) {
+                selectedPlayers = selectedPlayers.filter(p => p.name !== player.name);
+            } else {
+                selectedPlayers.push(player);
+            }
+
+            updatePlayersList();
+            selectedPlayersCount.textContent = selectedPlayers.length;
+            createTeamsBtn.disabled = selectedPlayers.length < 2;
+        }
+
+        // Select all players
+        selectAllBtn.addEventListener('click', () => {
+            selectedPlayers = [...allPlayers];
+            updatePlayersList();
+            selectedPlayersCount.textContent = selectedPlayers.length;
+            createTeamsBtn.disabled = false;
+        });
+
+        // Deselect all players
+        deselectAllBtn.addEventListener('click', () => {
+            selectedPlayers = [];
+            updatePlayersList();
+            selectedPlayersCount.textContent = 0;
+            createTeamsBtn.disabled = true;
+        });
+
+        // Create teams
+        createTeamsBtn.addEventListener('click', async () => {
+            const numTeams = parseInt(document.querySelector('input[name="teamCount"]:checked').value);
+
+            if (selectedPlayers.length < numTeams) {
+                showError(`Need at least ${numTeams} players to create ${numTeams} teams`);
+                return;
+            }
+
+            try {
+                errorDiv.classList.add('hidden');
+                createTeamsBtn.disabled = true;
+
+                const response = await fetch(`${API_URL}/create-teams`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        selectedPlayers: selectedPlayers,
+                        numTeams: numTeams
+                    })
+                });
+
+                const teams = await response.json();
+                currentTeams = teams;
+                displayTeams(teams);
+
+            } catch (error) {
+                console.error('Error creating teams:', error);
+                showError('Failed to create teams. Make sure the server is running.');
+            } finally {
+                createTeamsBtn.disabled = false;
+            }
+        });
+
+        // Display teams
+        function displayTeams(teams) {
+            const teamLabels = ['White', 'Color', 'White', 'Color'];
+            const teamColors = ['blue', 'orange', 'purple', 'red'];
+
+            let html = '';
+
+            if (teams.length === 2) {
+                html = `
+                    <div class="flex flex-col lg:flex-row gap-6 items-center">
+                        ${teams.map((team, i) => renderTeam(team, i, teamLabels[i], teamColors[i])).join('')}
+                    </div>
+                `;
+            } else {
+                html = `
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        ${teams.map((team, i) => renderTeam(team, i, teamLabels[i], teamColors[i])).join('')}
+                    </div>
+                `;
+            }
+
+            teamsContainer.innerHTML = html;
+            teamsSection.classList.remove('hidden');
+            window.scrollTo({ top: teamsContainer.offsetTop - 100, behavior: 'smooth' });
+
+            function renderTeam(team, i, label, color) {
+                const avgValue = (team.totalValue / team.players.length).toFixed(2);
+                const avgStamina = (team.totalStamina / team.players.length).toFixed(2);
+
+                return `
+                    <div class="flex-1 border-2 border-${color}-500 rounded-lg p-4 bg-${color}-50">
+                        <h3 class="text-lg font-bold text-${color}-700 mb-3 flex items-center justify-between">
+                            <span><i class="fas fa-users"></i> Team ${i + 1} (${label})</span>
+                            <span class="text-sm font-normal">Players: ${team.players.length}</span>
+                        </h3>
+                        <div class="mb-3 flex gap-4 text-sm font-semibold text-${color}-800 bg-white p-2 rounded">
+                            <span><i class="fas fa-star"></i> Total Value: ${team.totalValue}</span>
+                            <span><i class="fas fa-battery-full"></i> Avg Stamina: ${avgStamina}</span>
+                        </div>
+                        <div class="space-y-2">
+                            ${team.players.map(player => `
+                                <div class="bg-white p-2 rounded flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-medium">${player.name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs px-2 py-1 bg-gray-100 rounded">${player.assignedPosition}</span>
+                                        <span class="text-xs px-2 py-1 bg-${color}-100 rounded">V:${player.assignedPosition === player['1st position Choice'] ? player['1st position Value'] : player['2nd position value']}</span>
+                                        <span class="text-xs px-2 py-1 bg-${color}-100 rounded">S:${player['Stamina']}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Redistribute button
+        if (document.getElementById('redistributeBtn')) {
+            document.getElementById('redistributeBtn').addEventListener('click', () => {
+                // Shuffle selected players
+                const shuffled = [...selectedPlayers].sort(() => Math.random() - 0.5);
+                const numTeams = parseInt(document.querySelector('input[name="teamCount"]:checked').value);
+                
+                fetch(`${API_URL}/create-teams`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        selectedPlayers: shuffled,
+                        numTeams: numTeams
+                    })
+                })
+                .then(r => r.json())
+                .then(teams => {
+                    currentTeams = teams;
+                    displayTeams(teams);
+                })
+                .catch(error => console.error('Error redistributing:', error));
+            });
+        }
+
+        // Error handling
+        function showError(message) {
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
