@@ -145,113 +145,103 @@ function balanceTeams(players, numTeams) {
     }
   }
 
-  // Sort each position group by: VALUE (high to low), then RANK (low to high)
+  // Sort each position group by: VALUE (high to low), then RANK (high to low = better player)
   const sortByValueAndRank = (a, b) => {
     const aValue = parseInt(a['1st position Value']) || 0;
     const bValue = parseInt(b['1st position Value']) || 0;
-    const aRank = parseInt(a['1st position Rank']) || 999;
-    const bRank = parseInt(b['1st position Rank']) || 999;
+    const aRank = parseInt(a['1st position Rank']) || 0;
+    const bRank = parseInt(b['1st position Rank']) || 0;
 
-    if (bValue !== aValue) return bValue - aValue; // Higher value first
-    return aRank - bRank; // Lower rank first (better players)
+    if (bValue !== aValue) return bValue - aValue; // Higher value first (best players)
+    return bRank - aRank; // Higher rank first (better players = higher rank number)
   };
 
   for (const pos in playersByPosition) {
     playersByPosition[pos].sort(sortByValueAndRank);
   }
 
-  // Define team composition requirements
-  // For 7 players: 1 CB, 2 FB, 1 AM, 2 DM, 1 ST
-  // For more: add CB, then ST, then DM, then AM
-  const positionPriority = [
-    { name: 'Center Back', required: 1, addOrder: 1 },
-    { name: 'Fullback Defense', required: 2, addOrder: 4 },
-    { name: 'Attacking Mid', required: 1, addOrder: 3 },
-    { name: 'Defensive Mid', required: 2, addOrder: 2 },
-    { name: 'Striker', required: 1, addOrder: 1 }
+  // Define required positions for 7-player team base
+  // Format: { name, required: count, addOrder: priority for extra players }
+  const positionRequirements = [
+    { name: 'Center Back', required: 1, addOrder: 1 },           // Add first for extras
+    { name: 'Fullback Defense', required: 2, addOrder: 4 },      // Add last for extras
+    { name: 'Defensive Mid', required: 2, addOrder: 2 },         // Add third for extras
+    { name: 'Attacking Mid', required: 1, addOrder: 4 },         // Add last for extras
+    { name: 'Striker', required: 1, addOrder: 1 }                // Add first for extras (tied with CB)
   ];
 
   const baseTeamSize = 7;
   const playersPerTeam = Math.ceil(players.length / numTeams);
+  const usedPlayers = new Set();
 
-  // Phase 1: Distribute required positions to each team (7-player base)
-  for (let posIdx = 0; posIdx < positionPriority.length; posIdx++) {
-    const posReq = positionPriority[posIdx];
-    const availablePlayers = playersByPosition[posReq.name] || [];
-
-    let playerIdx = 0;
-    for (let count = 0; count < posReq.required; count++) {
+  // Phase 1: Distribute base 7-player composition to each team
+  // Distribute best rank players of each position to different teams (round-robin)
+  for (const posReq of positionRequirements) {
+    const availablePlayers = (playersByPosition[posReq.name] || [])
+      .filter(p => !usedPlayers.has(p.name));
+    
+    // For each required slot in this position (e.g., 2 FB slots)
+    for (let slotNum = 0; slotNum < posReq.required; slotNum++) {
+      // Distribute across teams in round-robin fashion
       for (let teamIdx = 0; teamIdx < numTeams; teamIdx++) {
-        if (playerIdx < availablePlayers.length) {
-          const player = availablePlayers[playerIdx];
-          assignPlayerToPrimaryPos(teams[teamIdx], player, posReq.name);
-          playerIdx++;
+        // Get the next best available player (already sorted by value then rank)
+        const playerIndexNeeded = slotNum * numTeams + teamIdx;
+        
+        if (playerIndexNeeded < availablePlayers.length) {
+          const selectedPlayer = availablePlayers[playerIndexNeeded];
+          assignPlayerToPrimaryPos(teams[teamIdx], selectedPlayer, posReq.name);
+          usedPlayers.add(selectedPlayer.name);
         }
       }
     }
   }
 
-  // Phase 2: Distribute additional players (if more than 7 per team)
-  const additionalOrder = ['Center Back', 'Striker', 'Defensive Mid', 'Attacking Mid'];
-  const usedPlayers = new Set();
+  // Phase 2: For additional players (if team size > 7)
+  // Add in order: Center Back → Striker → Defensive Mid → Attacking Mid
+  const additionOrder = ['Center Back', 'Striker', 'Defensive Mid', 'Attacking Mid'];
   
-  // Mark already assigned players
-  for (const team of teams) {
-    for (const p of team.players) {
-      usedPlayers.add(p.name);
-    }
-  }
-
-  // Add remaining players in order until teams are full
-  for (const posName of additionalOrder) {
+  for (const posName of additionOrder) {
     const availablePlayers = (playersByPosition[posName] || []).filter(p => !usedPlayers.has(p.name));
     
     for (const player of availablePlayers) {
-      // Find team with fewest players
-      let minTeam = 0;
-      let minCount = teams[0].players.length;
+      // Find team with fewest players that hasn't reached max
+      let minTeam = -1;
+      let minCount = Infinity;
       
-      for (let i = 1; i < numTeams; i++) {
-        if (teams[i].players.length < minCount && teams[i].players.length < playersPerTeam) {
+      for (let i = 0; i < numTeams; i++) {
+        if (teams[i].players.length < playersPerTeam && teams[i].players.length < minCount) {
           minCount = teams[i].players.length;
           minTeam = i;
         }
       }
 
-      if (teams[minTeam].players.length < playersPerTeam) {
+      if (minTeam >= 0) {
         assignPlayerToPrimaryPos(teams[minTeam], player, posName);
         usedPlayers.add(player.name);
       }
     }
   }
 
-  // Phase 3: Add remaining players not yet assigned (from any position not fully used)
-  for (const pos in playersByPosition) {
-    for (const player of playersByPosition[pos]) {
-      if (!usedPlayers.has(player.name)) {
-        // Find team with fewest players that hasn't reached max
-        let minTeam = 0;
-        let minCount = teams[0].players.length;
-        
-        for (let i = 1; i < numTeams; i++) {
-          if (teams[i].players.length < minCount && teams[i].players.length < playersPerTeam) {
-            minCount = teams[i].players.length;
-            minTeam = i;
-          }
-        }
-
-        if (teams[minTeam].players.length < playersPerTeam) {
-          assignPlayerToPrimaryPos(teams[minTeam], player, pos);
-          usedPlayers.add(player.name);
-        }
-      }
-    }
-  }
-
-  // Phase 4: Use secondary positions for players not yet assigned
-  const playersNotAssigned = players.filter(p => !usedPlayers.has(p.name));
+  // Phase 3: Handle players not yet assigned (use secondary positions)
+  const unassignedPlayers = players.filter(p => !usedPlayers.has(p.name));
   
-  for (const player of playersNotAssigned) {
+  // Sort unassigned by their 2nd position value and rank
+  const sortBySecondaryPos = (a, b) => {
+    const aValue = parseInt(a['2nd position value']) || 0;
+    const bValue = parseInt(b['2nd position value']) || 0;
+    const aRank = parseInt(a['2nd position Rank']) || 0;
+    const bRank = parseInt(b['2nd position Rank']) || 0;
+    const aStamina = parseInt(a['Stamina']) || 0;
+    const bStamina = parseInt(b['Stamina']) || 0;
+
+    if (bValue !== aValue) return bValue - aValue; // Higher value first (best players)
+    if (aRank !== bRank) return bRank - aRank;     // Higher rank first (better players)
+    return bStamina - aStamina;                     // Higher stamina first
+  };
+
+  unassignedPlayers.sort(sortBySecondaryPos);
+
+  for (const player of unassignedPlayers) {
     if (player['2nd position Choice'] && player['2nd position Choice'].trim()) {
       // Find team with fewest players
       let minTeam = 0;
@@ -269,7 +259,7 @@ function balanceTeams(players, numTeams) {
     }
   }
 
-  // Phase 5: Optimize - swap players to improve value/rank/stamina balance
+  // Phase 4: Optimize - swap players to balance value and stamina
   optimizeTeams(teams);
 
   return teams;
@@ -314,8 +304,10 @@ function balanceTeams(players, numTeams) {
           const valueDiff = Math.abs(team1.totalValue - team2.totalValue);
           const staminaDiff = Math.abs(team1.totalStamina - team2.totalStamina);
 
+          // Only optimize if there's significant imbalance
           if (valueDiff <= 2 && staminaDiff <= 2) continue;
 
+          // Try swapping players
           for (let p1 = 0; p1 < team1.players.length; p1++) {
             for (let p2 = 0; p2 < team2.players.length; p2++) {
               const player1 = team1.players[p1];
@@ -339,6 +331,7 @@ function balanceTeams(players, numTeams) {
                 (team2.totalStamina - p2Stamina + p1Stamina)
               );
 
+              // Swap if it improves balance
               if (newValueDiff + newStaminaDiff < valueDiff + staminaDiff) {
                 team1.players[p1] = player2;
                 team2.players[p2] = player1;
