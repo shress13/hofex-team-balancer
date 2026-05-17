@@ -161,72 +161,148 @@ function balanceTeams(players, numTeams) {
   }
 
   // Define required positions for 7-player team base
-  // Format: { name, required: count, addOrder: priority for extra players }
   const positionRequirements = [
-    { name: 'Center Back', required: 1, addOrder: 1 },           // Add first for extras
-    { name: 'Fullback Defense', required: 2, addOrder: 4 },      // Add last for extras
-    { name: 'Defensive Mid', required: 2, addOrder: 2 },         // Add third for extras
-    { name: 'Attacking Mid', required: 1, addOrder: 4 },         // Add last for extras
-    { name: 'Striker', required: 1, addOrder: 1 }                // Add first for extras (tied with CB)
+    { name: 'Center Back', required: 1 },
+    { name: 'Fullback Defense', required: 2 },
+    { name: 'Defensive Mid', required: 2 },
+    { name: 'Attacking Mid', required: 1 },
+    { name: 'Striker', required: 1 }
   ];
 
   const baseTeamSize = 7;
-  const playersPerTeam = Math.ceil(players.length / numTeams);
+  const playersPerTeam = Math.max(baseTeamSize, Math.ceil(players.length / numTeams));
   const usedPlayers = new Set();
 
-  // Phase 1: Distribute base 7-player composition to each team
-  // Distribute best rank players of each position to different teams (round-robin)
+  const sortCandidates = (list, valueKey, rankKey) => {
+    return list.slice().sort((a, b) => {
+      const aValue = parseInt(a[valueKey]) || 0;
+      const bValue = parseInt(b[valueKey]) || 0;
+      const aRank = parseInt(a[rankKey]) || 0;
+      const bRank = parseInt(b[rankKey]) || 0;
+      const aStamina = parseInt(a['Stamina']) || 0;
+      const bStamina = parseInt(b['Stamina']) || 0;
+
+      if (bValue !== aValue) return bValue - aValue;
+      if (bRank !== aRank) return bRank - aRank;
+      return bStamina - aStamina;
+    });
+  };
+
+  const primaryCandidatesByPosition = {};
+  const secondaryCandidatesByPosition = {};
+
+  for (const player of players) {
+    const primaryPos = player['1st position Choice'];
+    const secondaryPos = player['2nd position Choice'];
+
+    if (primaryPos && primaryPos.trim()) {
+      primaryCandidatesByPosition[primaryPos] = primaryCandidatesByPosition[primaryPos] || [];
+      primaryCandidatesByPosition[primaryPos].push(player);
+    }
+
+    if (secondaryPos && secondaryPos.trim()) {
+      secondaryCandidatesByPosition[secondaryPos] = secondaryCandidatesByPosition[secondaryPos] || [];
+    }
+  }
+
+  for (const pos in primaryCandidatesByPosition) {
+    primaryCandidatesByPosition[pos] = sortCandidates(primaryCandidatesByPosition[pos], '1st position Value', '1st position Rank');
+  }
+
+  for (const pos in secondaryCandidatesByPosition) {
+    secondaryCandidatesByPosition[pos] = sortCandidates(secondaryCandidatesByPosition[pos], '2nd position value', '2nd position Rank');
+  }
+
+  const getNextCandidate = (primaryList, secondaryList, primaryIndexObj, secondaryIndexObj) => {
+    while (primaryIndexObj.index < primaryList.length && usedPlayers.has(primaryList[primaryIndexObj.index].name)) {
+      primaryIndexObj.index += 1;
+    }
+    if (primaryIndexObj.index < primaryList.length) {
+      return primaryList[primaryIndexObj.index++];
+    }
+
+    while (secondaryIndexObj.index < secondaryList.length && usedPlayers.has(secondaryList[secondaryIndexObj.index].name)) {
+      secondaryIndexObj.index += 1;
+    }
+    if (secondaryIndexObj.index < secondaryList.length) {
+      return secondaryList[secondaryIndexObj.index++];
+    }
+
+    return null;
+  };
+
+  // Phase 1: Fill required base positions using first-choice players first, then second-choice fallback.
   for (const posReq of positionRequirements) {
-    const availablePlayers = (playersByPosition[posReq.name] || [])
-      .filter(p => !usedPlayers.has(p.name));
-    
-    // For each required slot in this position (e.g., 2 FB slots)
-    for (let slotNum = 0; slotNum < posReq.required; slotNum++) {
-      // Distribute across teams in round-robin fashion
+    const primaryList = primaryCandidatesByPosition[posReq.name] || [];
+    const secondaryList = secondaryCandidatesByPosition[posReq.name] || [];
+    const primaryIndexObj = { index: 0 };
+    const secondaryIndexObj = { index: 0 };
+
+    for (let slot = 0; slot < posReq.required; slot++) {
       for (let teamIdx = 0; teamIdx < numTeams; teamIdx++) {
-        // Get the next best available player (already sorted by value then rank)
-        const playerIndexNeeded = slotNum * numTeams + teamIdx;
-        
-        if (playerIndexNeeded < availablePlayers.length) {
-          const selectedPlayer = availablePlayers[playerIndexNeeded];
-          assignPlayerToPrimaryPos(teams[teamIdx], selectedPlayer, posReq.name);
-          usedPlayers.add(selectedPlayer.name);
+        const player = getNextCandidate(primaryList, secondaryList, primaryIndexObj, secondaryIndexObj);
+        if (player) {
+          assignPlayerToPrimaryPos(teams[teamIdx], player, posReq.name);
+          usedPlayers.add(player.name);
         }
       }
     }
   }
 
-  // Phase 2: For additional players (if team size > 7)
-  // Add in order: Center Back → Striker → Defensive Mid → Attacking Mid
-  const additionOrder = ['Center Back', 'Striker', 'Defensive Mid', 'Attacking Mid'];
-  
+  // Phase 2: Add extra players beyond the base 7-player composition in position priority order.
+  // Distribute in round-robin to ensure top-rated players are balanced across teams.
+  const additionOrder = ['Center Back', 'Fullback Defense', 'Defensive Mid', 'Attacking Mid', 'Striker'];
+
   for (const posName of additionOrder) {
-    const availablePlayers = (playersByPosition[posName] || []).filter(p => !usedPlayers.has(p.name));
-    
-    for (const player of availablePlayers) {
-      // Find team with fewest players that hasn't reached max
-      let minTeam = -1;
-      let minCount = Infinity;
-      
-      for (let i = 0; i < numTeams; i++) {
-        if (teams[i].players.length < playersPerTeam && teams[i].players.length < minCount) {
-          minCount = teams[i].players.length;
-          minTeam = i;
-        }
-      }
+    const primaryList = (primaryCandidatesByPosition[posName] || []).filter(p => !usedPlayers.has(p.name));
+    const secondaryList = (secondaryCandidatesByPosition[posName] || []).filter(p => !usedPlayers.has(p.name));
+    const extraCandidates = [];
+    const seen = new Set();
 
-      if (minTeam >= 0) {
-        assignPlayerToPrimaryPos(teams[minTeam], player, posName);
-        usedPlayers.add(player.name);
+    for (const person of primaryList) {
+      if (!seen.has(person.name)) {
+        extraCandidates.push(person);
+        seen.add(person.name);
+      }
+    }
+    for (const person of secondaryList) {
+      if (!seen.has(person.name)) {
+        extraCandidates.push(person);
+        seen.add(person.name);
+      }
+    }
+
+    // Distribute extra players round-robin across teams to ensure top players are balanced
+    let roundRobinIdx = 0;
+    for (const player of extraCandidates) {
+      let found = false;
+      let attempts = 0;
+      
+      // Try to place player in round-robin order
+      while (attempts < numTeams) {
+        const targetTeamIdx = roundRobinIdx % numTeams;
+        roundRobinIdx++;
+        
+        if (teams[targetTeamIdx].players.length < playersPerTeam) {
+          assignPlayerToPrimaryPos(teams[targetTeamIdx], player, posName);
+          usedPlayers.add(player.name);
+          found = true;
+          break;
+        }
+        attempts++;
+      }
+      
+      if (!found) {
+        // All teams are full for this position
+        break;
       }
     }
   }
 
-  // Phase 3: Handle players not yet assigned (use secondary positions)
-  const unassignedPlayers = players.filter(p => !usedPlayers.has(p.name));
-  
-  // Sort unassigned by their 2nd position value and rank
-  const sortBySecondaryPos = (a, b) => {
+  // Phase 3: Assign remaining players using their secondary position, value, rank, and stamina.
+  const remainingPlayers = players.filter(p => !usedPlayers.has(p.name));
+
+  const sortBySecondaryAndStamina = (a, b) => {
     const aValue = parseInt(a['2nd position value']) || 0;
     const bValue = parseInt(b['2nd position value']) || 0;
     const aRank = parseInt(a['2nd position Rank']) || 0;
@@ -234,29 +310,28 @@ function balanceTeams(players, numTeams) {
     const aStamina = parseInt(a['Stamina']) || 0;
     const bStamina = parseInt(b['Stamina']) || 0;
 
-    if (bValue !== aValue) return bValue - aValue; // Higher value first (best players)
-    if (aRank !== bRank) return bRank - aRank;     // Higher rank first (better players)
-    return bStamina - aStamina;                     // Higher stamina first
+    if (bValue !== aValue) return bValue - aValue;
+    if (bRank !== aRank) return bRank - aRank;
+    return bStamina - aStamina;
   };
 
-  unassignedPlayers.sort(sortBySecondaryPos);
+  remainingPlayers.sort(sortBySecondaryAndStamina);
 
-  for (const player of unassignedPlayers) {
+  for (const player of remainingPlayers) {
+    const assignedPosition = player['2nd position Choice'] && player['2nd position Choice'].trim()
+      ? player['2nd position Choice']
+      : player['1st position Choice'];
+
+    const targetTeam = teams
+      .map((team, idx) => ({ idx, count: team.players.length, totalValue: team.totalValue }))
+      .sort((a, b) => a.count - b.count || a.totalValue - b.totalValue)[0].idx;
+
     if (player['2nd position Choice'] && player['2nd position Choice'].trim()) {
-      // Find team with fewest players
-      let minTeam = 0;
-      let minCount = teams[0].players.length;
-      
-      for (let i = 1; i < numTeams; i++) {
-        if (teams[i].players.length < minCount) {
-          minCount = teams[i].players.length;
-          minTeam = i;
-        }
-      }
-
-      assignPlayerToSecondaryPos(teams[minTeam], player);
-      usedPlayers.add(player.name);
+      assignPlayerToSecondaryPos(teams[targetTeam], player);
+    } else {
+      assignPlayerToPrimaryPos(teams[targetTeam], player, assignedPosition);
     }
+    usedPlayers.add(player.name);
   }
 
   // Phase 4: Optimize - swap players to balance value and stamina
