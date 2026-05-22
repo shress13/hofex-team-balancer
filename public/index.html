@@ -6,7 +6,6 @@
     <title>Soccer Team Balancer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script async src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         .player-card {
             transition: all 0.3s ease;
@@ -162,39 +161,6 @@
             </div>
         </div>
 
-        <!-- Viber Screenshot Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
-                <i class="fas fa-image text-purple-600"></i> Extract from Viber Screenshots
-            </h2>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Upload Section -->
-                <div>
-                    <label class="block w-full cursor-pointer mb-4">
-                        <div class="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-500 hover:bg-purple-50 transition">
-                            <i class="fas fa-image text-3xl text-purple-400 mb-2 block"></i>
-                            <p class="text-sm text-gray-600">Upload Viber Screenshots</p>
-                            <p class="text-xs text-gray-400 mt-1">PNG, JPG, or JPEG files (multiple)</p>
-                        </div>
-                        <input type="file" id="viberScreenshots" accept="image/*" multiple class="hidden">
-                    </label>
-                    <button id="processScreenshotsBtn" class="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                        <i class="fas fa-search"></i> Extract Players from Images
-                    </button>
-                    <div id="processingStatus" class="mt-3 text-sm text-gray-600"></div>
-                </div>
-
-                <!-- Results Section -->
-                <div>
-                    <h3 class="font-semibold mb-2 text-gray-800">Extracted & Matched Players</h3>
-                    <div id="extractedPlayersContainer" class="bg-gray-50 rounded p-4 max-h-64 overflow-y-auto border-2 border-gray-200">
-                        <p class="text-gray-400 text-sm text-center py-8">Upload screenshots to extract player names</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Teams Display Section -->
         <div id="teamsSection" class="hidden">
             <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
@@ -247,201 +213,10 @@
         const errorText = document.getElementById('errorText');
         const selectedPlayersCount = document.getElementById('selectedPlayersCount');
         const totalPlayersCount = document.getElementById('totalPlayersCount');
-        const viberScreenshots = document.getElementById('viberScreenshots');
-        const processScreenshotsBtn = document.getElementById('processScreenshotsBtn');
-        const processingStatus = document.getElementById('processingStatus');
-        const extractedPlayersContainer = document.getElementById('extractedPlayersContainer');
 
         // Initialize
         loadPlayers();
 
-        // Handle Viber screenshot file selection
-        viberScreenshots.addEventListener('change', (e) => {
-            processScreenshotsBtn.disabled = e.target.files.length === 0;
-        });
-
-        // Process Viber screenshots with OCR
-        processScreenshotsBtn.addEventListener('click', async () => {
-            const files = viberScreenshots.files;
-            if (files.length === 0) {
-                alert('Please select at least one screenshot');
-                return;
-            }
-
-            processingStatus.textContent = 'Processing images with OCR...';
-            processingStatus.classList.add('text-blue-600');
-            processScreenshotsBtn.disabled = true;
-
-            try {
-                const extractedNames = new Set();
-
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    const img = new Image();
-                    img.src = URL.createObjectURL(file);
-
-                    img.onload = async () => {
-                        try {
-                            const { data: { text } } = await Tesseract.recognize(img, 'eng');
-                            const allLines = text.split('\n')
-                                .map(line => line.trim())
-                                .filter(line => line.length > 0);
-
-                            const names = filterRelevantNames(allLines);
-                            names.forEach(name => extractedNames.add(name));
-                        } catch (error) {
-                            console.error('OCR Error:', error);
-                            processingStatus.textContent = `Error processing ${file.name}. Trying next file...`;
-                        }
-
-                        if (i === files.length - 1) {
-                            displayMatchedPlayers(Array.from(extractedNames));
-                            processingStatus.textContent = `✓ Extracted ${extractedNames.size} player name(s)`;
-                            processingStatus.classList.remove('text-blue-600');
-                            processingStatus.classList.add('text-green-600');
-                        }
-                    };
-
-                    img.onerror = () => {
-                        processingStatus.textContent = `Error loading ${file.name}`;
-                        processingStatus.classList.remove('text-blue-600');
-                        processingStatus.classList.add('text-red-600');
-                    };
-                }
-            } catch (error) {
-                console.error('Screenshot processing error:', error);
-                processingStatus.textContent = 'Error processing screenshots';
-                processingStatus.classList.remove('text-blue-600');
-                processingStatus.classList.add('text-red-600');
-            } finally {
-                processScreenshotsBtn.disabled = false;
-            }
-        });
-
-        // Filter out dates, timestamps, and system messages
-        function filterRelevantNames(lines) {
-            const irrelevantPatterns = [
-                /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/,  // Dates (DD/MM/YYYY, MM-DD-YYYY, etc.)
-                /^\d{1,2}:\d{2}\s*(am|pm|AM|PM)?/,     // Times (HH:MM)
-                /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i,  // Month names
-                /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/i,  // Day names
-                /added\s+you/i,                         // Viber "added you"
-                /^(you|me|admin|system|bot)/i,          // System names
-                /^[+]?\d[\d\s\-()]{6,}/,                // Phone numbers
-                /^(http|https|www|\.com|\.org)/i,       // URLs
-                /^[^\w\s]/,                             // Lines starting with symbols
-                /[\[\(\{]/,                             // Lines with brackets
-                /^(via|from|to|sent|received|message)/i // System keywords
-            ];
-
-            const validNames = [];
-
-            for (const line of lines) {
-                let isRelevant = true;
-
-                // Check if line matches any irrelevant pattern
-                for (const pattern of irrelevantPatterns) {
-                    if (pattern.test(line)) {
-                        isRelevant = false;
-                        break;
-                    }
-                }
-
-                // Additional validation
-                if (isRelevant) {
-                    // Must contain at least one letter
-                    if (!/[a-zA-Z]/.test(line)) {
-                        isRelevant = false;
-                    }
-                    // Should be reasonable length for a player name (2-50 chars)
-                    if (line.length < 2 || line.length > 50) {
-                        isRelevant = false;
-                    }
-                    // Should not be all numbers or mostly numbers
-                    const digitCount = (line.match(/\d/g) || []).length;
-                    if (digitCount / line.length > 0.5) {
-                        isRelevant = false;
-                    }
-                }
-
-                if (isRelevant) {
-                    // Clean up the name: remove trailing punctuation, extra spaces
-                    const cleanedName = line
-                        .replace(/[,;:!?.\-_]$/, '')  // Remove trailing punctuation
-                        .replace(/\s+/g, ' ')          // Normalize spaces
-                        .trim();
-
-                    if (cleanedName.length > 1) {
-                        validNames.push(cleanedName);
-                    }
-                }
-            }
-
-            return validNames;
-        }
-
-        // Display matched and unmatched players
-        function displayMatchedPlayers(extractedNames) {
-            const matched = [];
-            const unmatched = [];
-
-            extractedNames.forEach(name => {
-                const found = allPlayers.find(p => p.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(p.name.toLowerCase()));
-                if (found) {
-                    matched.push(found);
-                } else {
-                    unmatched.push(name);
-                }
-            });
-
-            let html = '';
-
-            if (matched.length > 0) {
-                html += '<div class="mb-4"><h4 class="font-semibold text-green-700 mb-2"><i class="fas fa-check"></i> Matched Players (' + matched.length + ')</h4>';
-                html += '<div class="space-y-1">';
-                matched.forEach(player => {
-                    const isSelected = selectedPlayers.some(p => p.name === player.name);
-                    html += `
-                        <div class="flex items-center justify-between bg-green-50 p-2 rounded border border-green-200">
-                            <span class="text-sm">${player.name}</span>
-                            <button onclick="togglePlayerFromViber('${player.name}')" class="text-xs px-3 py-1 rounded ${isSelected ? 'bg-green-600 text-white' : 'bg-gray-200'} hover:bg-green-600 hover:text-white transition">
-                                ${isSelected ? 'Added' : 'Add'}
-                            </button>
-                        </div>
-                    `;
-                });
-                html += '</div></div>';
-            }
-
-            if (unmatched.length > 0) {
-                html += '<div><h4 class="font-semibold text-orange-700 mb-2"><i class="fas fa-exclamation"></i> Not Found (' + unmatched.length + ')</h4>';
-                html += '<div class="space-y-1">';
-                unmatched.forEach(name => {
-                    html += `<div class="text-xs bg-orange-50 p-2 rounded border border-orange-200 text-orange-700">${name}</div>`;
-                });
-                html += '</div></div>';
-            }
-
-            extractedPlayersContainer.innerHTML = html || '<p class="text-gray-400 text-center py-8">No players found in images</p>';
-        }
-
-        // Toggle player from Viber matches
-        window.togglePlayerFromViber = function(playerName) {
-            const player = allPlayers.find(p => p.name === playerName);
-            if (!player) return;
-
-            const isSelected = selectedPlayers.some(p => p.name === playerName);
-            if (isSelected) {
-                selectedPlayers = selectedPlayers.filter(p => p.name !== playerName);
-            } else {
-                selectedPlayers.push(player);
-            }
-
-            updatePlayersList();
-            displayMatchedPlayers(Array.from(new Set(viberScreenshots.files)));
-            selectedPlayersCount.textContent = selectedPlayers.length;
-            createTeamsBtn.disabled = selectedPlayers.length < 2;
-        };
 
         // Load players from server
         async function loadPlayers() {
