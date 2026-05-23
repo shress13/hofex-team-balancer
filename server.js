@@ -21,6 +21,37 @@ if (!fs.existsSync(dataDir)) {
 }
 
 const playersFile = path.join(dataDir, 'players.json');
+const ADMIN_KEY = process.env.ADMIN_KEY || 'admin123';
+
+function isAdminRequest(req) {
+  return req.headers['x-admin-key'] === ADMIN_KEY;
+}
+
+function normalizePlayer(player) {
+  return {
+    name: (player.name || '').trim(),
+    '1st position Choice': (player['1st position Choice'] || player['1st position choice'] || '').trim(),
+    '1st position Value': player['1st position Value'] || player['1st position value'] || 0,
+    '1st position Rank': player['1st position Rank'] || player['1st position rank'] || 0,
+    '2nd position Choice': (player['2nd position Choice'] || player['2nd position choice'] || '').trim(),
+    '2nd position value': player['2nd position value'] || player['2nd position Value'] || 0,
+    '2nd position Rank': player['2nd position Rank'] || player['2nd position rank'] || 0,
+    'Stamina': player['Stamina'] || player['stamina'] || 0
+  };
+}
+
+function validatePlayer(player) {
+  if (!player || typeof player !== 'object') {
+    return 'Each player must be a JSON object';
+  }
+  if (!player.name || typeof player.name !== 'string' || !player.name.trim()) {
+    return 'Each player must have a name';
+  }
+  if (!player['1st position Choice'] || !player['Stamina']) {
+    return 'Each player must have 1st position Choice and Stamina';
+  }
+  return null;
+}
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
@@ -63,33 +94,34 @@ app.get('/api/players', (req, res) => {
 // Upload JSON player database
 app.post('/api/upload-players', upload.single('file'), (req, res) => {
   try {
+    if (!isAdminRequest(req)) {
+      return res.status(403).json({ error: 'Admin key required to upload JSON' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Validate JSON format
     const content = fs.readFileSync(req.file.path, 'utf8');
     const players = JSON.parse(content);
 
-    // Validate player structure
     if (!Array.isArray(players)) {
       return res.status(400).json({ error: 'Players must be an array' });
     }
 
-    // Basic validation of player properties
-    for (const player of players) {
-      if (!player.name) {
-        return res.status(400).json({ error: 'Each player must have name property' });
-      }
-      // Check if has at least 1st position choice and stamina
-      if (!player['1st position Choice'] || !player['Stamina']) {
-        return res.status(400).json({ error: 'Each player must have 1st position Choice and Stamina' });
+    const normalizedPlayers = players.map(normalizePlayer);
+    for (const player of normalizedPlayers) {
+      const validationError = validatePlayer(player);
+      if (validationError) {
+        return res.status(400).json({ error: validationError });
       }
     }
 
+    fs.writeFileSync(playersFile, JSON.stringify(normalizedPlayers, null, 2));
+
     res.json({ 
       message: 'Players uploaded successfully',
-      count: players.length 
+      count: normalizedPlayers.length 
     });
   } catch (error) {
     console.error('Error uploading players:', error);
@@ -98,6 +130,32 @@ app.post('/api/upload-players', upload.single('file'), (req, res) => {
     } else {
       res.status(500).json({ error: 'Failed to upload players' });
     }
+  }
+});
+
+app.post('/api/add-player', (req, res) => {
+  try {
+    const player = normalizePlayer(req.body);
+    const validationError = validatePlayer(player);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
+    if (fs.existsSync(playersFile)) {
+      const currentPlayers = JSON.parse(fs.readFileSync(playersFile, 'utf8'));
+      if (currentPlayers.some(p => p.name.trim().toLowerCase() === player.name.trim().toLowerCase())) {
+        return res.status(400).json({ error: 'A player with this name already exists' });
+      }
+      currentPlayers.push(player);
+      fs.writeFileSync(playersFile, JSON.stringify(currentPlayers, null, 2));
+      return res.json({ message: 'Player added successfully', player });
+    }
+
+    fs.writeFileSync(playersFile, JSON.stringify([player], null, 2));
+    return res.json({ message: 'Player added successfully', player });
+  } catch (error) {
+    console.error('Error adding player:', error);
+    res.status(500).json({ error: 'Failed to add player' });
   }
 });
 

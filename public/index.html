@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#16a34a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Soccer Team Balancer</title>
+    <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -48,13 +51,19 @@
                 </h2>
                 
                 <div class="mb-4">
-                    <label class="block w-full cursor-pointer">
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition">
-                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2 block"></i>
-                            <p class="text-sm text-gray-600">Upload JSON</p>
-                            <p class="text-xs text-gray-400 mt-1">.json file</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Admin JSON Upload</label>
+                    <div class="flex gap-2 items-center mb-3">
+                        <input id="adminKeyInput" type="password" placeholder="Admin key" class="flex-1 rounded border border-gray-300 p-2 focus:border-blue-500 focus:ring-blue-500" />
+                        <button id="unlockUploadBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm">Unlock</button>
+                    </div>
+                    <p id="uploadHint" class="text-xs text-gray-500 mb-3">Upload JSON is admin-only. Enter the admin key to enable the file input.</p>
+                    <label class="block w-full cursor-not-allowed">
+                        <div id="uploadDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 text-gray-400">
+                            <i class="fas fa-cloud-upload-alt text-3xl mb-2 block"></i>
+                            <p class="text-sm">Upload JSON</p>
+                            <p class="text-xs mt-1">.json file</p>
                         </div>
-                        <input type="file" id="playerJsonUpload" accept=".json" class="hidden">
+                        <input type="file" id="playerJsonUpload" accept=".json" class="hidden" disabled>
                     </label>
                 </div>
 
@@ -78,15 +87,71 @@
                     <i class="fas fa-users text-green-600"></i> Select Players
                 </h2>
 
-                <div class="mb-4 flex gap-2">
+                <div class="mb-4 flex flex-col md:flex-row gap-2">
                     <button id="selectAllBtn" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm">
                         Select All
                     </button>
                     <button id="deselectAllBtn" class="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700 transition text-sm">
                         Deselect All
                     </button>
+                    <button id="showAddPlayerBtn" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition text-sm">
+                        <i class="fas fa-plus"></i> Add New Player
+                    </button>
                 </div>
 
+                <div id="addPlayerForm" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Add New Player</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="block text-sm text-gray-700">
+                            <span>Name</span>
+                            <input id="newPlayerName" type="text" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="Player Name">
+                        </label>
+                        <label class="block text-sm text-gray-700">
+                            <span>1st Position Choice</span>
+                            <input id="newPlayerPos1Choice" type="text" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="Striker">
+                        </label>
+                        <label class="block text-sm text-gray-700">
+                            <span>1st Position Value</span>
+                            <input id="newPlayerPos1Value" type="number" min="0" max="10" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="8">
+                        </label>
+                        <label class="block text-sm text-gray-700">
+                            <span>1st Position Rank</span>
+                            <input id="newPlayerPos1Rank" type="number" min="0" max="10" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="1">
+                        </label>
+                        <label class="block text-sm text-gray-700">
+                            <span>2nd Position Choice</span>
+                            <input id="newPlayerPos2Choice" type="text" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="Midfielder (optional)">
+                        </label>
+                        <label class="block text-sm text-gray-700">
+                            <span>2nd Position Value</span>
+                            <input id="newPlayerPos2Value" type="number" min="0" max="10" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="5">
+                        </label>
+                        <label class="block text-sm text-gray-700">
+                            <span>2nd Position Rank</span>
+                            <input id="newPlayerPos2Rank" type="number" min="0" max="10" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="3">
+                        </label>
+                        <label class="block text-sm text-gray-700">
+                            <span>Stamina</span>
+                            <input id="newPlayerStamina" type="number" min="0" max="10" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="8">
+                        </label>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button id="addPlayerBtn" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition text-sm">
+                            Add Player
+                        </button>
+                        <button id="cancelAddPlayerBtn" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-300 transition text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input id="playerFilterInput" type="text" placeholder="Filter by name or position" class="col-span-2 rounded border border-gray-300 p-3 focus:border-blue-500 focus:ring-blue-500" />
+                    <select id="positionFilter" class="rounded border border-gray-300 p-3 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="all">All Positions</option>
+                    </select>
+                    <button id="clearFilterBtn" class="col-span-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition text-sm">Clear Filter</button>
+                </div>
                 <div id="playersList" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-2 bg-gray-50 rounded">
                     <p class="text-gray-400 col-span-full text-center py-8">Loading players...</p>
                 </div>
@@ -200,6 +265,18 @@
         const playersList = document.getElementById('playersList');
         const selectAllBtn = document.getElementById('selectAllBtn');
         const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const showAddPlayerBtn = document.getElementById('showAddPlayerBtn');
+        const addPlayerForm = document.getElementById('addPlayerForm');
+        const addPlayerBtn = document.getElementById('addPlayerBtn');
+        const cancelAddPlayerBtn = document.getElementById('cancelAddPlayerBtn');
+        const newPlayerName = document.getElementById('newPlayerName');
+        const newPlayerPos1Choice = document.getElementById('newPlayerPos1Choice');
+        const newPlayerPos1Value = document.getElementById('newPlayerPos1Value');
+        const newPlayerPos1Rank = document.getElementById('newPlayerPos1Rank');
+        const newPlayerPos2Choice = document.getElementById('newPlayerPos2Choice');
+        const newPlayerPos2Value = document.getElementById('newPlayerPos2Value');
+        const newPlayerPos2Rank = document.getElementById('newPlayerPos2Rank');
+        const newPlayerStamina = document.getElementById('newPlayerStamina');
         const createTeamsBtn = document.getElementById('createTeamsBtn');
         const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
         const teamsSection = document.getElementById('teamsSection');
@@ -213,9 +290,52 @@
         const errorText = document.getElementById('errorText');
         const selectedPlayersCount = document.getElementById('selectedPlayersCount');
         const totalPlayersCount = document.getElementById('totalPlayersCount');
+        const adminKeyInput = document.getElementById('adminKeyInput');
+        const unlockUploadBtn = document.getElementById('unlockUploadBtn');
+        const uploadHint = document.getElementById('uploadHint');
+        const playerFilterInput = document.getElementById('playerFilterInput');
+        const positionFilter = document.getElementById('positionFilter');
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+
+        let filterText = '';
+        let filterPosition = 'all';
+        let adminUploadEnabled = false;
 
         // Initialize
         loadPlayers();
+
+        unlockUploadBtn.addEventListener('click', () => {
+            const adminKey = adminKeyInput.value.trim();
+            if (!adminKey) {
+                uploadHint.textContent = 'Enter the admin key to enable upload.';
+                uploadHint.classList.add('text-red-500');
+                uploadHint.classList.remove('text-gray-500');
+                return;
+            }
+            adminUploadEnabled = true;
+            playerJsonUpload.disabled = false;
+            uploadHint.textContent = 'Admin upload enabled. Select a JSON file to upload.';
+            uploadHint.classList.remove('text-red-500');
+            uploadHint.classList.add('text-green-600');
+        });
+
+        playerFilterInput.addEventListener('input', (e) => {
+            filterText = e.target.value.trim().toLowerCase();
+            updatePlayersList();
+        });
+
+        positionFilter.addEventListener('change', (e) => {
+            filterPosition = e.target.value;
+            updatePlayersList();
+        });
+
+        clearFilterBtn.addEventListener('click', () => {
+            filterText = '';
+            filterPosition = 'all';
+            playerFilterInput.value = '';
+            positionFilter.value = 'all';
+            updatePlayersList();
+        });
 
 
         // Load players from server
@@ -223,6 +343,7 @@
             try {
                 const response = await fetch(`${API_URL}/players`);
                 allPlayers = await response.json();
+                populatePositionFilter();
                 updatePlayersList();
                 totalPlayersCount.textContent = allPlayers.length;
             } catch (error) {
@@ -231,10 +352,27 @@
             }
         }
 
+        function populatePositionFilter() {
+            const positions = new Set();
+            allPlayers.forEach(player => {
+                if (player['1st position Choice']) positions.add(player['1st position Choice']);
+                if (player['2nd position Choice']) positions.add(player['2nd position Choice']);
+            });
+            const options = [`<option value="all">All Positions</option>`, ...[...positions].sort().map(pos => `<option value="${pos}">${pos}</option>`)];
+            positionFilter.innerHTML = options.join('');
+        }
+
         // Upload JSON player database
         playerJsonUpload.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            if (!adminUploadEnabled) {
+                statusDiv.classList.remove('hidden');
+                statusText.textContent = 'Admin upload not enabled. Enter the admin key and unlock first.';
+                statusDiv.classList.add('bg-red-100', 'text-red-700');
+                statusDiv.classList.remove('bg-green-100', 'text-green-700');
+                return;
+            }
 
             const formData = new FormData();
             formData.append('file', file);
@@ -245,6 +383,9 @@
                 
                 const response = await fetch(`${API_URL}/upload-players`, {
                     method: 'POST',
+                    headers: {
+                        'x-admin-key': adminKeyInput.value.trim()
+                    },
                     body: formData
                 });
 
@@ -313,9 +454,29 @@
                 return;
             }
 
-            playersList.innerHTML = allPlayers.map((player, index) => `
-                <div class="player-card border border-gray-300 rounded-lg p-3 cursor-pointer hover:shadow-md ${selectedPlayers.some(p => p.name === player.name) ? 'selected' : ''}" 
-                     onclick="togglePlayerSelection(${index})">
+            const filteredPlayers = allPlayers
+                .map((player, index) => ({ player, index }))
+                .filter(({ player }) => {
+                    const textMatch = filterText
+                        ? (player.name || '').toLowerCase().includes(filterText)
+                          || (player['1st position Choice'] || '').toLowerCase().includes(filterText)
+                          || (player['2nd position Choice'] || '').toLowerCase().includes(filterText)
+                        : true;
+
+                    const positionMatch = filterPosition === 'all'
+                        || (player['1st position Choice'] === filterPosition)
+                        || (player['2nd position Choice'] === filterPosition);
+
+                    return textMatch && positionMatch;
+                });
+
+            if (filteredPlayers.length === 0) {
+                playersList.innerHTML = '<p class="text-gray-400 col-span-full text-center py-8">No players match the filter.</p>';
+                return;
+            }
+
+            playersList.innerHTML = filteredPlayers.map(({ player, index }) => `
+                <div class="player-card border border-gray-300 rounded-lg p-3 cursor-pointer hover:shadow-md ${selectedPlayers.some(p => p.name === player.name) ? 'selected' : ''}" onclick="togglePlayerSelection(${index})">
                     <div class="flex items-start justify-between mb-2">
                         <div>
                             <p class="font-semibold text-gray-800">${player.name}</p>
@@ -324,8 +485,7 @@
                                 ${player['2nd position Choice'] ? `<span class="position-badge bg-blue-100 text-blue-700">${player['2nd position Choice']}</span>` : ''}
                             </div>
                         </div>
-                        <input type="checkbox" class="w-4 h-4 text-green-600 rounded" 
-                               ${selectedPlayers.some(p => p.name === player.name) ? 'checked' : ''}>
+                        <input type="checkbox" class="w-4 h-4 text-green-600 rounded" ${selectedPlayers.some(p => p.name === player.name) ? 'checked' : ''}>
                     </div>
                     <div class="text-xs text-gray-600 flex gap-3">
                         <span><i class="fas fa-star"></i> Pos1 Value: ${player['1st position Value'] || '0'}</span>
@@ -366,6 +526,86 @@
             selectedPlayersCount.textContent = 0;
             createTeamsBtn.disabled = true;
         });
+
+        // Show add player form
+        showAddPlayerBtn.addEventListener('click', () => {
+            addPlayerForm.classList.toggle('hidden');
+        });
+
+        // Cancel add player
+        cancelAddPlayerBtn.addEventListener('click', () => {
+            addPlayerForm.classList.add('hidden');
+            clearAddPlayerForm();
+        });
+
+        // Add new player manually
+        addPlayerBtn.addEventListener('click', async () => {
+            const name = newPlayerName.value.trim();
+            const pos1Choice = newPlayerPos1Choice.value.trim();
+            const pos1Value = newPlayerPos1Value.value.trim() || '0';
+            const pos1Rank = newPlayerPos1Rank.value.trim() || '0';
+            const pos2Choice = newPlayerPos2Choice.value.trim();
+            const pos2Value = newPlayerPos2Value.value.trim() || '0';
+            const pos2Rank = newPlayerPos2Rank.value.trim() || '0';
+            const stamina = newPlayerStamina.value.trim() || '0';
+
+            if (!name) {
+                alert('Enter a player name before adding.');
+                return;
+            }
+
+            if (allPlayers.some(player => player.name.toLowerCase() === name.toLowerCase())) {
+                alert('This player already exists in the list.');
+                return;
+            }
+
+            const newPlayer = {
+                name,
+                '1st position Choice': pos1Choice || 'Unknown',
+                '1st position Value': parseInt(pos1Value, 10) || 0,
+                '1st position Rank': parseInt(pos1Rank, 10) || 0,
+                '2nd position Choice': pos2Choice,
+                '2nd position value': parseInt(pos2Value, 10) || 0,
+                '2nd position Rank': parseInt(pos2Rank, 10) || 0,
+                'Stamina': parseInt(stamina, 10) || 0
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/add-player`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newPlayer)
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to add player');
+                }
+
+                await loadPlayers();
+                selectedPlayers = allPlayers.filter(player => player.name.toLowerCase() === name.toLowerCase());
+                selectedPlayersCount.textContent = selectedPlayers.length;
+                createTeamsBtn.disabled = selectedPlayers.length < 2;
+                updatePlayersList();
+                addPlayerForm.classList.add('hidden');
+                clearAddPlayerForm();
+            } catch (error) {
+                alert(`Unable to add player: ${error.message}`);
+            }
+        });
+
+        function clearAddPlayerForm() {
+            newPlayerName.value = '';
+            newPlayerPos1Choice.value = '';
+            newPlayerPos1Value.value = '';
+            newPlayerPos1Rank.value = '';
+            newPlayerPos2Choice.value = '';
+            newPlayerPos2Value.value = '';
+            newPlayerPos2Rank.value = '';
+            newPlayerStamina.value = '';
+        }
 
         // Create teams
         createTeamsBtn.addEventListener('click', async () => {
@@ -576,6 +816,17 @@
         function showError(message) {
             errorText.textContent = message;
             errorDiv.classList.remove('hidden');
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    await navigator.serviceWorker.register('/sw.js');
+                    console.log('Service worker registered.');
+                } catch (err) {
+                    console.warn('Service worker registration failed:', err);
+                }
+            });
         }
     </script>
 </body>
